@@ -3,131 +3,76 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#173b2b">
+<meta name="theme-color" content="#073f2e">
 <title>Mariotto</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#173b2b;color:#fff;min-height:100vh}
-.app{max-width:900px;margin:auto;padding:16px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
-h1{margin:4px 0;font-size:34px}.badge{background:#d8ad43;color:#172319;padding:7px 11px;border-radius:999px;font-weight:700}
-.panel{background:#22523c;border:1px solid #397054;border-radius:18px;padding:16px;margin-top:14px;box-shadow:0 8px 30px #0003}
-.row{display:flex;gap:10px;flex-wrap:wrap}.stat{flex:1;min-width:120px;background:#183f2e;border-radius:14px;padding:12px}
-.small{opacity:.8;font-size:13px}.big{font-size:22px;font-weight:800}
-button{border:0;border-radius:13px;padding:13px 16px;font-size:16px;font-weight:800;background:#d8ad43;color:#172319;cursor:pointer}
-button.secondary{background:#f3f0e7}.cards{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-top:14px}
-.card{width:74px;height:108px;background:#faf7ed;color:#181818;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;font-size:24px;box-shadow:0 4px 9px #0005;cursor:pointer;user-select:none}
-.card.red{color:#a52828}.card.disabled{opacity:.45;transform:scale(.96);cursor:not-allowed}
-.table{height:240px;position:relative;display:flex;align-items:center;justify-content:center;background:#1c4935;border-radius:18px;margin-top:12px}
-.center{display:flex;gap:12px}.notice{text-align:center;font-weight:700;margin:10px 0}
-.hidden{display:none!important}.rules{line-height:1.5}
+:root{--green:#073f2e;--green2:#0c543e;--gold:#e5ae32;--cream:#f8f0d9;--ink:#18352a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% 20%,#12624a,#063a2b 70%);color:var(--cream);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100svh}
+main{max-width:620px;margin:auto;min-height:100svh;padding:28px 22px 34px;display:flex;flex-direction:column;align-items:center}
+.logo{font-family:Georgia,serif;font-style:italic;font-size:72px;font-weight:700;letter-spacing:-3px;margin:8px 0 12px;text-shadow:0 3px 12px #0004}
+.deckfan{height:190px;width:270px;position:relative;margin:5px 0 18px}
+.card{position:absolute;width:105px;height:155px;border:2px solid #d5c59b;border-radius:12px;background:#fbf2d8;color:#18352a;box-shadow:0 7px 18px #0005;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.card span{font-size:38px}.c1{left:25px;top:23px;transform:rotate(-20deg)}.c2{left:76px;top:10px;transform:rotate(-7deg)}.c3{left:113px;top:6px;transform:rotate(8deg)}.c4{left:145px;top:21px;transform:rotate(22deg)}
+.subtitle{text-align:center;font-size:19px;line-height:1.45;opacity:.86;margin:0 0 34px}
+.btn{width:100%;max-width:520px;border:0;border-radius:18px;padding:19px 18px;margin:7px 0;font-size:21px;font-weight:800;background:var(--gold);color:#18251e;box-shadow:0 6px 0 #a87513}
+.btn.secondary{background:#225b47;color:var(--cream);border:1px solid #6f927f;box-shadow:none}
+.link{margin:27px 0 55px;font-size:18px;opacity:.9;cursor:pointer}.back{margin-top:auto;opacity:.65}
+.hidden{display:none!important}
+.game{width:100%}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.top h1{font:italic 42px Georgia,serif;margin:0}.pill{padding:8px 12px;border-radius:20px;background:#174e3c;border:1px solid #6d907e;font-size:14px}
+.table{background:radial-gradient(circle,#1c7355,#0a4a37 70%);border:1px solid #79a18e;border-radius:28px;min-height:400px;padding:18px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 0 0 35px #0004}
+.info{text-align:center}.info strong{font-size:22px}.center{display:flex;justify-content:center;gap:8px;min-height:120px;align-items:center}.played{position:relative!important;left:auto!important;top:auto!important;transform:none!important;width:82px;height:120px}
+.hand{display:flex;justify-content:center;gap:4px;margin-top:-10px}.hand .playing{cursor:pointer;transition:.15s}.hand .playing:hover{transform:translateY(-12px)}.smallcard{width:68px;height:102px;border:2px solid #d5c59b;border-radius:9px;background:#fbf2d8;color:#17382b;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;box-shadow:0 5px 12px #0005}.rank{font-size:19px}.suit{font-size:27px}.red{color:#a52d25}.controls{display:flex;gap:8px;margin-top:12px}.controls .btn{font-size:15px;padding:13px;box-shadow:none}.modal{position:fixed;inset:0;background:#001b14cc;display:flex;align-items:center;justify-content:center;padding:24px}.box{max-width:500px;width:100%;background:#104b38;border:1px solid #7b9f8c;border-radius:22px;padding:25px;text-align:center}.box h2{font:italic 38px Georgia,serif;margin-top:0}
+@media(max-width:430px){main{padding:22px 18px}.logo{font-size:64px}.deckfan{transform:scale(.88);margin:-2px 0 4px}.subtitle{font-size:18px;margin-bottom:25px}.smallcard{width:59px;height:91px}.rank{font-size:16px}.suit{font-size:23px}.table{min-height:370px}}
 </style>
 </head>
 <body>
-<div class="app">
-  <div class="top"><h1>🃏 Mariotto</h1><span class="badge">Carte Napoletane</span></div>
-
-  <div id="menu" class="panel">
-    <h2>Partita</h2>
-    <p class="rules">Mazzo napoletano da 40 carte · 5 carte per giocatore · briscola · prese · Mariotto 20/40.</p>
-    <button onclick="newGame()">Nuova partita</button>
+<main>
+<section id="home">
+  <div class="deckfan">
+    <div class="card c1"><span>1 ♦</span></div><div class="card c2"><span>R ♥</span></div>
+    <div class="card c3"><span>C ♠</span></div><div class="card c4"><span>7 ♣</span></div>
   </div>
+  <div class="logo">Mariotto</div>
+  <p class="subtitle">La briscola a due. Un tavolo verde,<br>quaranta carte, nessuna fretta.</p>
+  <button class="btn" onclick="start(true)">Riprendi la partita</button>
+  <button class="btn secondary" onclick="start(false)">Nuova partita</button>
+  <div class="link" onclick="showRules()">Come si gioca</div>
+</section>
 
-  <div id="game" class="hidden">
-    <div class="row">
-      <div class="stat"><div class="small">Turno</div><div id="turn" class="big">-</div></div>
-      <div class="stat"><div class="small">Briscola</div><div id="trump" class="big">-</div></div>
-      <div class="stat"><div class="small">Prese</div><div id="tricks" class="big">0</div></div>
-    </div>
-
-    <div class="panel">
-      <div class="notice" id="message"></div>
-      <div class="table"><div class="center" id="table"></div></div>
-    </div>
-
-    <div class="panel">
-      <h3>Le tue carte</h3>
-      <div class="cards" id="hand"></div>
-      <p class="small">Tocca una carta per giocarla.</p>
-    </div>
-
-    <div class="panel row">
-      <button onclick="callMariotto()">Dichiara Mariotto</button>
-      <button class="secondary" onclick="newGame()">Nuova partita</button>
-    </div>
+<section id="game" class="game hidden">
+  <div class="top"><h1>Mariotto</h1><div class="pill" id="turn">Tocca a te</div></div>
+  <div class="table">
+    <div class="info">Briscola: <strong id="trump">—</strong><br><span id="status">Scegli una carta</span></div>
+    <div class="center" id="played"></div>
+    <div><div class="info">Le tue carte</div><div class="hand" id="hand"></div></div>
   </div>
-</div>
+  <div class="controls"><button class="btn secondary" onclick="mariotto()">Dichiara Mariotto</button><button class="btn secondary" onclick="out()">Mi chiamo fuori</button><button class="btn secondary" onclick="home()">Menu</button></div>
+</section>
+</main>
 
+<div id="modal" class="modal hidden"><div class="box"><h2 id="mtitle">Come si gioca</h2><p id="mtext">Mazzo napoletano da 40 carte. Si gioca a briscola in due. Il Mariotto è Re + Cavallo dello stesso seme: 20 punti, oppure 40 se è il seme di briscola. Puoi dichiararlo quando sei di mano dopo aver vinto la presa. Con “Mi chiamo fuori”, 61 o più punti significa vittoria immediata; sotto 61, sconfitta immediata.</p><button class="btn" onclick="closeModal()">Chiudi</button></div></div>
 <script>
-const suits=[
-  {n:"Denari",s:"♦",r:true},{n:"Coppe",s:"♥",r:true},
-  {n:"Spade",s:"♠",r:false},{n:"Bastoni",s:"♣",r:false}
-];
-const ranks=[
- ["Asso",1],["2",2],["3",3],["4",4],["5",5],["6",6],["7",7],
- ["Fante",8],["Cavallo",9],["Re",10]
-];
-let deck=[],hand=[],trump,table=[],tricks=0,turn="Tu",called=false;
+const suits=[["denari","♦",false],["coppe","♥",true],["spade","♠",false],["bastoni","♣",false]];
+const ranks=[["Asso",11],["2",0],["3",10],["4",0],["5",0],["6",0],["7",0],["Fante",2],["Cavallo",3],["Re",4]];
+let deck=[],hand=[],ai=[],trump,lead=null,played=[],turn="player",points=0,tricks=0;
 
-function makeDeck(){
- deck=[]; suits.forEach(s=>ranks.forEach(r=>deck.push({rank:r[0],value:r[1],suit:s.n,sym:s.s,red:s.r})));
- deck.sort(()=>Math.random()-.5);
-}
-function cardHTML(c,i,disabled=false){
- return `<div class="card ${c.red?'red':''} ${disabled?'disabled':''}" onclick="${disabled?'':'playCard('+i+')'}">
-   <div>${c.sym}</div><div style="font-size:15px">${c.rank}</div>
- </div>`;
-}
-function newGame(){
- makeDeck(); hand=deck.splice(0,5); trump=deck[deck.length-1];
- table=[]; tricks=0; called=false; turn="Tu";
- document.getElementById("menu").classList.add("hidden");
- document.getElementById("game").classList.remove("hidden");
- render();
-}
-function render(){
- document.getElementById("turn").textContent=turn;
- document.getElementById("trump").textContent=trump.sym+" "+trump.suit;
- document.getElementById("tricks").textContent=tricks;
- document.getElementById("message").textContent=turn==="Tu"?"Scegli una carta.":"L'avversario sta giocando…";
- document.getElementById("hand").innerHTML=hand.map((c,i)=>cardHTML(c,i,turn!=="Tu")).join("");
- document.getElementById("table").innerHTML=table.map(c=>cardHTML(c,0,true)).join("");
-}
-function playCard(i){
- if(turn!=="Tu") return;
- const c=hand.splice(i,1)[0]; table.push(c); turn="Avversario"; render();
- setTimeout(aiPlay,650);
-}
-function aiPlay(){
- if(turn!=="Avversario")return;
- if(hand.length===0){finishTrick();return}
- const c=hand.shift(); table.push(c); turn="Tu"; render();
- setTimeout(finishTrick,450);
-}
-function finishTrick(){
- if(table.length<2)return;
- const a=table[0],b=table[1];
- const winner=cardPower(b,a)>cardPower(a,b)?"Avversario":"Tu";
- if(winner==="Tu")tricks++;
- table=[]; turn="Tu";
- if(hand.length===0){render(); setTimeout(endGame,250);return}
- render();
-}
-function cardPower(c,lead){
- const trumpSuit=trump.suit;
- let p=c.value;
- if(c.suit===trumpSuit)p+=100;
- if(c.suit===lead.suit)p+=50;
- return p;
-}
-function callMariotto(){
- if(called){return}
- called=true;
- const score=hand.some(c=>c.rank==="Re"&&c.suit===trump.suit)&&hand.some(c=>c.rank==="Cavallo"&&c.suit===trump.suit);
- document.getElementById("message").textContent=score?"Mariotto! Hai Re e Cavallo di briscola.":"Dichiarazione effettuata.";
-}
-function endGame(){
- const msg=tricks>2?"🏆 Hai vinto!":tricks===2?"🤝 Pareggio!":"Hai perso.";
- document.getElementById("message").textContent=msg+" Prese vinte: "+tricks;
-}
+function makeDeck(){let d=[];for(const [s,sy,red] of suits)for(const [r,v] of ranks)d.push({s,sy,red,r,v});return d.sort(()=>Math.random()-.5)}
+function start(resume){document.getElementById("home").classList.add("hidden");document.getElementById("game").classList.remove("hidden");if(!resume||!localStorage.mariotto){newGame()}else{try{Object.assign(window,JSON.parse(localStorage.mariotto));render()}catch(e){newGame()}}}
+function newGame(){deck=makeDeck();hand=deck.splice(0,5);ai=deck.splice(0,5);trump=deck[deck.length-1];played=[];turn=Math.random()<.5?"player":"ai";points=0;tricks=0;save();render();if(turn==="ai")setTimeout(aiPlay,650)}
+function save(){localStorage.mariotto=JSON.stringify({deck,hand,ai,trump,played,turn,points,tricks})}
+function name(c){return c.r+" "+c.sy}
+function card(c,click){return `<div class="smallcard ${c.red?'red':''} ${click?'playing':''}" ${click?`onclick="play(${hand.indexOf(c)})"`:""}><div class="rank">${c.r}</div><div class="suit">${c.sy}</div></div>`}
+function render(){document.getElementById("trump").textContent=name(trump);document.getElementById("turn").textContent=turn==="player"?"Tocca a te":"Avversario";document.getElementById("status").textContent=`Prese: ${tricks} · Punti: ${points}`;document.getElementById("hand").innerHTML=hand.map(c=>card(c,turn==="player")).join("");document.getElementById("played").innerHTML=played.map(c=>card(c,false)).join("");}
+function power(c){let p=c.v;if(c.s===trump.s)p+=100;return p}
+function play(i){if(turn!=="player")return;const c=hand.splice(i,1)[0];played.push(c);turn="ai";render();setTimeout(aiPlay,550)}
+function aiPlay(){if(!ai.length){end();return}const c=ai.shift();played.push(c);setTimeout(resolve,450)}
+function resolve(){if(played.length<2){turn="player";render();return}const winner=power(played[0])>=power(played[1])?"player":"ai";if(winner==="player"){tricks++;points+=played.reduce((a,c)=>a+c.v,0)}played=[];turn=winner;draw();save();render();if(turn==="ai")setTimeout(aiPlay,550)}
+function draw(){while(hand.length<5&&deck.length)hand.push(deck.shift());while(ai.length<5&&deck.length)ai.push(deck.shift())}
+function mariotto(){if(turn!=="player")return;const r=hand.find(c=>c.r==="Re"),k=hand.find(c=>c.r==="Cavallo");if(r&&k&&r.s===k.s){alert(r.s===trump.s?"Mariotto! +40 punti":"Mariotto! +20 punti");points+=r.s===trump.s?40:20;save();render()}else alert("Non hai Re e Cavallo dello stesso seme.");}
+function out(){if(turn!=="player")return;end(points>=61?"Hai vinto!":"Hai perso!")}
+function end(msg){if(!msg)msg=points>ai.reduce((a,c)=>a+c.v,0)?"Hai vinto!":points===ai.reduce((a,c)=>a+c.v,0)?"Pareggio!":"Hai perso!";document.getElementById("mtitle").textContent=msg;document.getElementById("mtext").textContent=`Partita terminata. Punti: ${points}. Prese vinte: ${tricks}.`;document.getElementById("modal").classList.remove("hidden")}
+function showRules(){document.getElementById("mtitle").textContent="Come si gioca";document.getElementById("mtext").textContent="Mazzo napoletano da 40 carte. Briscola a due. 5 carte a testa. Il Mariotto è Re + Cavallo dello stesso seme: 20 punti, 40 se è briscola. “Mi chiamo fuori” vince con almeno 61 punti.";document.getElementById("modal").classList.remove("hidden")}
+function closeModal(){document.getElementById("modal").classList.add("hidden")}
+function home(){document.getElementById("game").classList.add("hidden");document.getElementById("home").classList.remove("hidden")}
 </script>
-</body>
-</html>
+</body></html>
