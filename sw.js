@@ -1,4 +1,4 @@
-var CACHE_NAME = "mariotto-v1";
+var CACHE_NAME = "mariotto-v2";
 var URLS_TO_CACHE = [
   "./index.html",
   "./manifest.json",
@@ -36,20 +36,18 @@ self.addEventListener("fetch", function(event) {
       url.indexOf("firestore.googleapis.com") !== -1) {
     return;
   }
+  /* Network-first strategy: try network, fall back to cache */
   event.respondWith(
-    caches.match(event.request).then(function(response) {
-      if (response) return response;
-      return fetch(event.request).then(function(networkResponse) {
-        if (networkResponse && networkResponse.status === 200) {
-          var responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then(function(cache) {
-            cache.put(event.request, responseClone);
-          });
-        }
-        return networkResponse;
-      }).catch(function() {
-        /* Offline fallback - if request fails and no cache, return nothing */
-      });
+    fetch(event.request).then(function(networkResponse) {
+      if (networkResponse && networkResponse.status === 200) {
+        var responseClone = networkResponse.clone();
+        caches.open(CACHE_NAME).then(function(cache) {
+          cache.put(event.request, responseClone);
+        });
+      }
+      return networkResponse;
+    }).catch(function() {
+      return caches.match(event.request);
     })
   );
 });
