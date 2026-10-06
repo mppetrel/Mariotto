@@ -1544,6 +1544,7 @@ var mpData = null;
 var prevDeclaredM = null;
 var prevBriscola = null;
 var mpResultShown = false;
+var mpRematchState = "";
 var mpRafId = 0;
 
 function startMultiplayerGame(roomId, playerNum) {
@@ -1553,6 +1554,7 @@ function startMultiplayerGame(roomId, playerNum) {
   prevDeclaredM = null;
   prevBriscola = null;
   mpResultShown = false;
+  mpRematchState = "";
   var mpEl = document.getElementById("mp-game"); if (mpEl) mpEl.removeAttribute("data-init");
   /* Pause non-essential listeners during game */
   if (friendsUnsub) { friendsUnsub(); friendsUnsub = null; }
@@ -1597,7 +1599,8 @@ function startMultiplayerGame(roomId, playerNum) {
     }
     prevBriscola = newBri ? JSON.parse(JSON.stringify(newBri)) : null;
     /* Detect rematch */
-    if (newData.rematchStatus === "pending" && newData.rematchBy !== currentUser.uid) {
+    if (newData.rematchStatus === "pending" && newData.rematchBy !== currentUser.uid && mpRematchState !== "received") {
+      mpRematchState = "received";
       var rmNick = newData.rematchByNick || "Avversario";
       showO('<h2 style="color:#FFD700">Bella?</h2>'
         + '<p style="text-align:center">' + rmNick + ' vuole la rivincita!</p>'
@@ -1606,7 +1609,8 @@ function startMultiplayerGame(roomId, playerNum) {
         + '<button class="cb" data-action="mpRemNo" style="background:#c0392b;color:#fff">No</button>'
         + '</div>');
     }
-    if (newData.rematchStatus === "accepted" && newData.rematchRoomId) {
+    if (newData.rematchStatus === "accepted" && newData.rematchRoomId && mpRematchState !== "joining") {
+      mpRematchState = "joining";
       var newRoomId = newData.rematchRoomId;
       /* Clean up current listener */
       if (mpUnsubscribe) { mpUnsubscribe(); mpUnsubscribe = null; }
@@ -1614,10 +1618,12 @@ function startMultiplayerGame(roomId, playerNum) {
       /* Join the new room - figure out which player I am */
       var myP = (newData.player1 && newData.player1.uid === currentUser.uid) ? 1 : 2;
       startMultiplayerGame(newRoomId, myP);
+      return;
     }
     if (newData.rematchStatus === "declined" && newData.rematchBy === currentUser.uid) {
       showT("Rivincita rifiutata!");
       setTimeout(function() { mpLeaveGame(); }, 1500);
+      return;
     }
     mpData = newData;
     /* Sync single-player globals for shared functions (beats, mBon) */
@@ -1870,6 +1876,8 @@ function showMPResult() {
 
 function mpRequestRematch() {
   if (!hasFB || !db || !currentRoomId) return;
+  if (mpRematchState) return;
+  mpRematchState = "sent";
   hideO();
   var myEmail = currentUser ? currentUser.email : "?";
   var myNick2 = myNickname || getNick(myEmail);
