@@ -487,6 +487,38 @@ cursor:pointer;font-family:Georgia,serif;font-weight:bold}
 .jf{margin-top:10px}
 .jf input{width:100%;padding:10px;border:1px solid #555;border-radius:6px;background:#1a3a1a;color:#fff;font-size:18px;font-family:monospace;text-align:center;letter-spacing:3px;text-transform:uppercase}
 .waitmsg{color:#aaa;font-size:13px;text-align:center;margin-top:12px;animation:pul 1.5s infinite}
+
+/* ===== FRIENDS SYSTEM ===== */
+.hb5{background:linear-gradient(135deg,#8E44AD,#6C3483);border-color:#9B59B6}
+.fr-add{display:flex;gap:6px;width:100%;padding:0 4px}
+.fr-inp{flex:1;padding:8px;border:1px solid #555;border-radius:6px;background:#1a3a1a;color:#fff;font-size:13px;font-family:Georgia,serif}
+.fr-inp::placeholder{color:#777}
+.fr-btn{background:linear-gradient(135deg,#27AE60,#1E8449);color:#fff;border:none;border-radius:6px;padding:8px 14px;font-size:12px;font-weight:bold;cursor:pointer;font-family:Georgia,serif;white-space:nowrap}
+.fr-btn:active{transform:scale(0.95)}
+.fr-section{width:100%;margin:6px 0}
+.fr-section-title{color:#DAA520;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;padding:4px 0;border-bottom:1px solid rgba(218,165,32,0.2);margin-bottom:4px}
+.fr-item{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;margin:3px 0;background:rgba(255,255,255,0.06);border-radius:8px;border:1px solid rgba(255,255,255,0.1)}
+.fr-info{display:flex;align-items:center;gap:6px}
+.fr-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.fr-dot.on{background:#2ECC71;box-shadow:0 0 6px #2ECC71}
+.fr-dot.off{background:#555}
+.fr-dot.ingame{background:#F39C12;box-shadow:0 0 6px #F39C12}
+.fr-name{color:#eee;font-size:13px}
+.fr-status{color:#888;font-size:10px}
+.fr-actions{display:flex;gap:4px}
+.fr-sfida{background:linear-gradient(135deg,#DAA520,#B8860B);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:bold;cursor:pointer;font-family:Georgia,serif}
+.fr-sfida:active{transform:scale(0.95)}
+.fr-sfida:disabled{opacity:0.3;cursor:default}
+.fr-accept{background:#27AE60;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:bold;cursor:pointer}
+.fr-decline{background:#c0392b;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:bold;cursor:pointer}
+.fr-remove{background:none;border:1px solid rgba(255,255,255,0.15);color:#999;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer}
+.fr-remove:active{background:rgba(255,255,255,0.1)}
+.fr-empty{color:#777;text-align:center;font-size:12px;padding:16px}
+.ch-popup{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.92);border:2px solid #DAA520;border-radius:16px;padding:14px 20px;z-index:1100;text-align:center;max-width:300px;width:90%;box-shadow:0 4px 20px rgba(0,0,0,0.6)}
+.ch-popup.off{display:none}
+.ch-popup h3{color:#FFD700;font-size:14px;margin-bottom:6px;font-family:Georgia,serif}
+.ch-popup p{color:#ccc;font-size:12px;margin-bottom:10px}
+.ch-btns{display:flex;gap:8px;justify-content:center}
 </style>
 </head><body>
 <div id="app">
@@ -512,6 +544,7 @@ cursor:pointer;font-family:Georgia,serif;font-weight:bold}
 <div class="sn" id="home-stats">Caricamento statistiche...</div>
 </div>
 <button class="hbtn hb1" id="btn-vs-cpu">🤖 Gioca vs Computer</button>
+<button class="hbtn hb5" id="btn-friends">👥 Amici</button>
 <button class="hbtn hb2" id="btn-online">🎮 Gioca Online</button>
 <button class="hbtn hb4" id="btn-history">📊 Storico Partite</button>
 <button class="hbtn hb6" id="btn-logout">🚪 Esci</button>
@@ -525,6 +558,19 @@ cursor:pointer;font-family:Georgia,serif;font-weight:bold}
 <div class="bk" id="btn-back-stats">← Indietro</div>
 <h2 style="color:#FFD700;text-align:center;margin-bottom:8px">📊 Storico Partite</h2>
 <div id="stats-body"></div>
+</div>
+</div>
+<div id="scr-friends" class="scr">
+<div class="home" style="gap:8px">
+<div class="bk" id="btn-back-friends">← Indietro</div>
+<h2 style="color:#FFD700;margin-bottom:4px">👥 Amici</h2>
+<div class="fr-add">
+<input type="email" id="inp-friend-email" placeholder="Email amico..." class="fr-inp">
+<button class="fr-btn" id="btn-add-friend">Aggiungi</button>
+</div>
+<div id="friend-err" class="err" style="margin:4px 0"></div>
+<div id="friend-requests" style="width:100%"></div>
+<div id="friend-list" style="width:100%;max-height:45vh;overflow-y:auto"></div>
 </div>
 </div>
 <div id="scr-lobby" class="scr">
@@ -575,6 +621,7 @@ cursor:pointer;font-family:Georgia,serif;font-weight:bold}
 </div>
 <div id="toast" class="toast"></div>
 <div id="ovl" class="overlay off"><div id="pnl" class="pnl"></div></div>
+<div id="ch-popup" class="ch-popup off"></div>
 
 <script>
 
@@ -596,6 +643,7 @@ function initFirebase() {
       firebase.initializeApp(firebaseConfig);
       auth = firebase.auth();
       db = firebase.firestore();
+      auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(){});
       hasFB = true;
       auth.onAuthStateChanged(function(user) {
         if (user) {
@@ -603,6 +651,8 @@ function initFirebase() {
           showScreen("home");
           document.getElementById("home-email").innerHTML = user.email || "";
           loadStats();
+          setPresence(true, false);
+          listenForChallenges();
         } else {
           currentUser = null;
           cleanupListeners();
@@ -1022,6 +1072,9 @@ function doLogin() {
 
 function doLogout() {
   cleanupListeners();
+  cleanupFriends();
+  removePresence();
+  if (challengeUnsub) { challengeUnsub(); challengeUnsub = null; }
   if (hasFB && auth) { auth.signOut(); }
   else { currentUser = null; showScreen("login"); }
 }
@@ -1142,6 +1195,7 @@ function saveGameResult(p1Email, p2Email, score1, score2, mariotto1, mariotto2, 
 
 /* ===== SINGLE PLAYER (vs Computer) ===== */
 function startVsCPU() {
+  setPresence(true, true);
   showScreen("game");
   newGame();
   renderGame();
@@ -1807,10 +1861,381 @@ function copyRoomCode() {
 }
 
 /* ===== EVENT LISTENERS ===== */
+
+/* ===== FRIENDS & PRESENCE SYSTEM ===== */
+var friendsUnsub = null;
+var presenceUnsub = null;
+var challengeUnsub = null;
+var friendsList = [];
+var presenceMap = {};
+var pendingRequests = [];
+var incomingChallenge = null;
+
+function setPresence(online, inGame) {
+  if (!hasFB || !db || !currentUser) return;
+  var ref = db.collection("presence").doc(currentUser.uid);
+  ref.set({
+    uid: currentUser.uid,
+    email: currentUser.email,
+    online: online,
+    inGame: inGame || false,
+    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+  }, {merge: true}).catch(function(){});
+}
+
+function removePresence() {
+  if (!hasFB || !db || !currentUser) return;
+  db.collection("presence").doc(currentUser.uid).delete().catch(function(){});
+}
+
+function listenForChallenges() {
+  if (!hasFB || !db || !currentUser) return;
+  if (challengeUnsub) challengeUnsub();
+  challengeUnsub = db.collection("challenges")
+    .where("toUid", "==", currentUser.uid)
+    .where("status", "==", "pending")
+    .onSnapshot(function(snap) {
+      snap.docChanges().forEach(function(change) {
+        if (change.type === "added") {
+          var data = change.doc.data();
+          incomingChallenge = {id: change.doc.id, data: data};
+          showChallengePopup(data.fromEmail);
+        }
+      });
+    });
+}
+
+function showChallengePopup(fromEmail) {
+  var popup = document.getElementById("ch-popup");
+  if (!popup) return;
+  var name = fromEmail.split("@")[0];
+  popup.innerHTML = '<h3>&#9876; Sfida!</h3>'
+    + '<p><strong>' + name + '</strong> ti sfida a Mariotto!</p>'
+    + '<div class="ch-btns">'
+    + '<button class="fr-accept" id="btn-ch-accept">Accetta</button>'
+    + '<button class="fr-decline" id="btn-ch-decline">Rifiuta</button>'
+    + '</div>';
+  popup.className = "ch-popup";
+  var accBtn = document.getElementById("btn-ch-accept");
+  var decBtn = document.getElementById("btn-ch-decline");
+  if (accBtn) accBtn.addEventListener("click", function() { acceptFriendChallenge(); });
+  if (decBtn) decBtn.addEventListener("click", function() { declineFriendChallenge(); });
+}
+
+function hideChallengePopup() {
+  var popup = document.getElementById("ch-popup");
+  if (popup) popup.className = "ch-popup off";
+}
+
+function acceptFriendChallenge() {
+  if (!incomingChallenge || !hasFB || !db || !currentUser) return;
+  var chId = incomingChallenge.id;
+  var chData = incomingChallenge.data;
+  hideChallengePopup();
+
+  var code = genRoomCode();
+  var deck = shuf(mkDeck());
+  var hand1 = [], hand2 = [];
+  var i;
+  for (i = 0; i < 5; i++) { hand1.push(deck.pop()); hand2.push(deck.pop()); }
+  var briCard = deck.shift();
+
+  var roomData = {
+    code: code,
+    createdBy: chData.fromUid,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    status: "playing",
+    player1: { uid: chData.fromUid, email: chData.fromEmail },
+    player2: { uid: currentUser.uid, email: currentUser.email },
+    deck: JSON.parse(JSON.stringify(deck)),
+    briscola: JSON.parse(JSON.stringify(briCard)),
+    briscolaSuit: briCard.s,
+    hand1: JSON.parse(JSON.stringify(hand1)),
+    hand2: JSON.parse(JSON.stringify(hand2)),
+    trick: [],
+    currentTurn: 1,
+    phase: "play",
+    prese1: [], prese2: [],
+    points1: 0, points2: 0,
+    mariotto1: 0, mariotto2: 0,
+    declaredMariotto: {},
+    winner: null, finalScore: null
+  };
+
+  db.collection("rooms").add(roomData).then(function(docRef) {
+    db.collection("challenges").doc(chId).update({
+      status: "accepted",
+      roomId: docRef.id
+    });
+    setPresence(true, true);
+    startMultiplayerGame(docRef.id, 2);
+  }).catch(function(e) {
+    showT("Errore: " + e.message);
+  });
+  incomingChallenge = null;
+}
+
+function declineFriendChallenge() {
+  if (!incomingChallenge || !hasFB || !db) return;
+  db.collection("challenges").doc(incomingChallenge.id).update({status: "declined"}).catch(function(){});
+  hideChallengePopup();
+  incomingChallenge = null;
+}
+
+function addFriend() {
+  if (!hasFB || !db || !currentUser) return;
+  var inp = document.getElementById("inp-friend-email");
+  var errEl = document.getElementById("friend-err");
+  if (!inp || !errEl) return;
+  var email = inp.value.trim().toLowerCase();
+  errEl.innerHTML = "";
+  if (!email || email.indexOf("@") < 0) { errEl.innerHTML = "Inserisci un email valida."; return; }
+  if (email === currentUser.email.toLowerCase()) { errEl.innerHTML = "Non puoi aggiungere te stesso!"; return; }
+
+  var myEmail = currentUser.email.toLowerCase();
+  db.collection("friends")
+    .where("user1", "==", myEmail < email ? myEmail : email)
+    .where("user2", "==", myEmail < email ? email : myEmail)
+    .get()
+    .then(function(snap) {
+      if (!snap.empty) {
+        errEl.innerHTML = "Amicizia gia esistente o richiesta in corso.";
+        return;
+      }
+      db.collection("friends").add({
+        user1: myEmail < email ? myEmail : email,
+        user2: myEmail < email ? email : myEmail,
+        user1uid: myEmail < email ? currentUser.uid : "",
+        user2uid: myEmail < email ? "" : currentUser.uid,
+        status: "pending",
+        requestedBy: myEmail,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(function() {
+        inp.value = "";
+        showT("Richiesta inviata a " + email.split("@")[0] + "!");
+      }).catch(function(e) {
+        errEl.innerHTML = "Errore: " + e.message;
+      });
+    }).catch(function(e) {
+      errEl.innerHTML = "Errore: " + e.message;
+    });
+}
+
+function removeFriend(docId) {
+  if (!hasFB || !db) return;
+  db.collection("friends").doc(docId).delete().catch(function(){});
+}
+
+function acceptFriendRequest(docId) {
+  if (!hasFB || !db || !currentUser) return;
+  db.collection("friends").doc(docId).update({
+    status: "accepted",
+    user1uid: currentUser.uid,
+    user2uid: currentUser.uid
+  }).then(function() {
+    return db.collection("friends").doc(docId).get();
+  }).then(function(snap) {
+    if (snap.exists) {
+      var d = snap.data();
+      var update = {};
+      var myEmail = currentUser.email.toLowerCase();
+      if (d.user1 === myEmail) { update.user1uid = currentUser.uid; }
+      else { update.user2uid = currentUser.uid; }
+      update.status = "accepted";
+      db.collection("friends").doc(docId).update(update);
+    }
+  }).catch(function(){});
+}
+
+function declineFriendRequest(docId) {
+  if (!hasFB || !db) return;
+  db.collection("friends").doc(docId).delete().catch(function(){});
+}
+
+function sendFriendChallenge(friendEmail, friendUid) {
+  if (!hasFB || !db || !currentUser) return;
+  db.collection("challenges").add({
+    fromUid: currentUser.uid,
+    fromEmail: currentUser.email,
+    toUid: friendUid,
+    toEmail: friendEmail,
+    status: "pending",
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(docRef) {
+    showT("Sfida inviata a " + friendEmail.split("@")[0] + "!");
+    var chRef = db.collection("challenges").doc(docRef.id);
+    var chUnsub = chRef.onSnapshot(function(snap) {
+      if (!snap.exists) return;
+      var d = snap.data();
+      if (d.status === "accepted" && d.roomId) {
+        chUnsub();
+        setPresence(true, true);
+        startMultiplayerGame(d.roomId, 1);
+      } else if (d.status === "declined") {
+        chUnsub();
+        showT("Sfida rifiutata.");
+      }
+    });
+    setTimeout(function() {
+      chRef.get().then(function(snap) {
+        if (snap.exists && snap.data().status === "pending") {
+          chRef.update({status: "expired"}).catch(function(){});
+          chUnsub();
+          showT("Sfida scaduta.");
+        }
+      }).catch(function(){});
+    }, 30000);
+  }).catch(function(e) {
+    showT("Errore: " + e.message);
+  });
+}
+
+function enterFriendsScreen() {
+  if (!hasFB || !db || !currentUser) { showT("Richiede connessione."); return; }
+  showScreen("friends");
+  loadFriends();
+}
+
+function loadFriends() {
+  if (!hasFB || !db || !currentUser) return;
+  var myEmail = currentUser.email.toLowerCase();
+
+  if (friendsUnsub) friendsUnsub();
+  friendsUnsub = db.collection("friends")
+    .where("user1", "==", myEmail)
+    .onSnapshot(function(snap1) {
+      db.collection("friends")
+        .where("user2", "==", myEmail)
+        .get()
+        .then(function(snap2) {
+          friendsList = [];
+          pendingRequests = [];
+          snap1.forEach(function(doc) {
+            var d = doc.data(); d._id = doc.id;
+            if (d.status === "pending" && d.requestedBy !== myEmail) { pendingRequests.push(d); }
+            else if (d.status === "accepted") { friendsList.push(d); }
+            else if (d.status === "pending" && d.requestedBy === myEmail) { friendsList.push(d); }
+          });
+          snap2.forEach(function(doc) {
+            var d = doc.data(); d._id = doc.id;
+            if (d.status === "pending" && d.requestedBy !== myEmail) { pendingRequests.push(d); }
+            else if (d.status === "accepted") { friendsList.push(d); }
+            else if (d.status === "pending" && d.requestedBy === myEmail) { friendsList.push(d); }
+          });
+          loadPresenceForFriends();
+        }).catch(function(){});
+    });
+}
+
+function loadPresenceForFriends() {
+  if (presenceUnsub) presenceUnsub();
+  var friendEmails = [];
+  var i, f, fEmail;
+  var myEmail = currentUser.email.toLowerCase();
+  for (i = 0; i < friendsList.length; i++) {
+    f = friendsList[i];
+    fEmail = f.user1 === myEmail ? f.user2 : f.user1;
+    friendEmails.push(fEmail);
+  }
+  if (friendEmails.length === 0) { renderFriendsScreen(); return; }
+
+  presenceMap = {};
+  presenceUnsub = db.collection("presence")
+    .where("online", "==", true)
+    .onSnapshot(function(snap) {
+      presenceMap = {};
+      snap.forEach(function(doc) {
+        var d = doc.data();
+        if (d.email) presenceMap[d.email.toLowerCase()] = d;
+      });
+      renderFriendsScreen();
+    });
+}
+
+function renderFriendsScreen() {
+  var myEmail = currentUser.email.toLowerCase();
+  var reqEl = document.getElementById("friend-requests");
+  var listEl = document.getElementById("friend-list");
+  if (!reqEl || !listEl) return;
+
+  var rh = "";
+  if (pendingRequests.length > 0) {
+    rh += '<div class="fr-section"><div class="fr-section-title">Richieste in arrivo</div>';
+    var r, rName;
+    for (var ri = 0; ri < pendingRequests.length; ri++) {
+      r = pendingRequests[ri];
+      rName = r.requestedBy.split("@")[0];
+      rh += '<div class="fr-item">';
+      rh += '<div class="fr-info"><span class="fr-name">' + rName + '</span></div>';
+      rh += '<div class="fr-actions">';
+      rh += '<button class="fr-accept" data-fr-action="accept" data-fr-id="' + r._id + '">Accetta</button>';
+      rh += '<button class="fr-decline" data-fr-action="decline" data-fr-id="' + r._id + '">Rifiuta</button>';
+      rh += '</div></div>';
+    }
+    rh += '</div>';
+  }
+  reqEl.innerHTML = rh;
+
+  var lh = "";
+  if (friendsList.length === 0 && pendingRequests.length === 0) {
+    lh = '<div class="fr-empty">Nessun amico ancora. Aggiungi qualcuno!</div>';
+  } else {
+    lh += '<div class="fr-section"><div class="fr-section-title">I miei amici</div>';
+    var fi, fr, fEmail, fName, pres, isOnline, isInGame, statusTxt, dotClass;
+    for (fi = 0; fi < friendsList.length; fi++) {
+      fr = friendsList[fi];
+      fEmail = fr.user1 === myEmail ? fr.user2 : fr.user1;
+      fName = fEmail.split("@")[0];
+      pres = presenceMap[fEmail.toLowerCase()];
+      isOnline = pres && pres.online;
+      isInGame = pres && pres.inGame;
+
+      if (fr.status === "pending") {
+        dotClass = "fr-dot off";
+        statusTxt = "In attesa...";
+      } else if (isInGame) {
+        dotClass = "fr-dot ingame";
+        statusTxt = "In partita";
+      } else if (isOnline) {
+        dotClass = "fr-dot on";
+        statusTxt = "Online";
+      } else {
+        dotClass = "fr-dot off";
+        statusTxt = "Offline";
+      }
+
+      lh += '<div class="fr-item">';
+      lh += '<div class="fr-info"><span class="' + dotClass + '"></span>';
+      lh += '<div><span class="fr-name">' + fName + '</span>';
+      lh += '<div class="fr-status">' + statusTxt + '</div></div></div>';
+      lh += '<div class="fr-actions">';
+      if (fr.status === "accepted" && isOnline && !isInGame && pres && pres.uid) {
+        lh += '<button class="fr-sfida" data-fr-action="challenge" data-fr-email="' + fEmail + '" data-fr-uid="' + pres.uid + '">Sfida!</button>';
+      }
+      lh += '<button class="fr-remove" data-fr-action="remove" data-fr-id="' + fr._id + '">&#10005;</button>';
+      lh += '</div></div>';
+    }
+    lh += '</div>';
+  }
+  listEl.innerHTML = lh;
+}
+
+function cleanupFriends() {
+  if (friendsUnsub) { friendsUnsub(); friendsUnsub = null; }
+  if (presenceUnsub) { presenceUnsub(); presenceUnsub = null; }
+}
+
+
 var _e1227=document.getElementById("btn-login");if(_e1227)_e1227.addEventListener("click", doLogin);
 var _e1228=document.getElementById("tog-login");if(_e1228)_e1228.addEventListener("click", toggleLoginMode);
 var _e1229=document.getElementById("btn-logout");if(_e1229)_e1229.addEventListener("click", doLogout);
 var _e1230=document.getElementById("btn-vs-cpu");if(_e1230)_e1230.addEventListener("click", startVsCPU);
+var _eFriends=document.getElementById("btn-friends");if(_eFriends)_eFriends.addEventListener("click", enterFriendsScreen);
+var _eBackFr=document.getElementById("btn-back-friends");if(_eBackFr)_eBackFr.addEventListener("click", function() { cleanupFriends(); showScreen("home"); });
+var _eAddFr=document.getElementById("btn-add-friend");if(_eAddFr)_eAddFr.addEventListener("click", addFriend);
+var _eInpFrEmail=document.getElementById("inp-friend-email");if(_eInpFrEmail)_eInpFrEmail.addEventListener("keydown", function(e) {
+  if (e.key === "Enter") addFriend();
+});
 var _elOnline=document.getElementById("btn-online");if(_elOnline)_elOnline.addEventListener("click", function() { enterLobby(); });
 var _elCreateLobby=document.getElementById("btn-create-lobby");if(_elCreateLobby)_elCreateLobby.addEventListener("click", function() { leaveLobby(); createRoom(); });
 var _elJoinLobby=document.getElementById("btn-join-lobby");if(_elJoinLobby)_elJoinLobby.addEventListener("click", function() { leaveLobby(); showScreen("join"); });
@@ -1860,6 +2285,34 @@ var _e1249=document.getElementById("game");if(_e1249)_e1249.addEventListener("cl
 });
 
 /* Multiplayer game events */
+/* Friends list click delegation */
+var _eFrList=document.getElementById("friend-list");if(_eFrList)_eFrList.addEventListener("click", function(e) {
+  var el = e.target, i, action;
+  for (i = 0; i < 8; i++) {
+    if (!el || el === this) break;
+    action = el.getAttribute("data-fr-action");
+    if (action) {
+      if (action === "challenge") sendFriendChallenge(el.getAttribute("data-fr-email"), el.getAttribute("data-fr-uid"));
+      else if (action === "remove") removeFriend(el.getAttribute("data-fr-id"));
+      return;
+    }
+    el = el.parentNode;
+  }
+});
+var _eFrReqs=document.getElementById("friend-requests");if(_eFrReqs)_eFrReqs.addEventListener("click", function(e) {
+  var el = e.target, i, action;
+  for (i = 0; i < 8; i++) {
+    if (!el || el === this) break;
+    action = el.getAttribute("data-fr-action");
+    if (action) {
+      if (action === "accept") acceptFriendRequest(el.getAttribute("data-fr-id"));
+      else if (action === "decline") declineFriendRequest(el.getAttribute("data-fr-id"));
+      return;
+    }
+    el = el.parentNode;
+  }
+});
+
 var _e1269=document.getElementById("mp-game");if(_e1269)_e1269.addEventListener("click", function(e) {
   var el = e.target, i, a;
   for (i = 0; i < 12; i++) {
@@ -1890,12 +2343,17 @@ var _e1286=document.getElementById("ovl");if(_e1286)_e1286.addEventListener("cli
       else if (a === "ng") { hideO(); newGame(); render(); }
       else if (a === "cf") doF();
       else if (a === "mpCF") mpDoFuori();
-      else if (a === "goHome") { hideO(); showScreen("home"); loadStats(); }
+      else if (a === "goHome") { hideO(); showScreen("home"); loadStats(); setPresence(true, false); }
       return;
     }
     el = el.parentNode;
   }
 });
+
+/* Set offline on page close */
+try {
+  window.addEventListener("beforeunload", function() { removePresence(); });
+} catch(ex) {}
 
 /* Register service worker */
 try {
