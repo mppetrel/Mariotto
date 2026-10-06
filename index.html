@@ -1419,12 +1419,26 @@ var nickCache = {};
 var mpPlayer = 0; /* 1 or 2 */
 var mpData = null;
 var prevDeclaredM = null;
+var mpRafId = 0;
 
 function startMultiplayerGame(roomId, playerNum) {
   if (!hasFB || !db) return;
   mpPlayer = playerNum;
   currentRoomId = roomId;
   prevDeclaredM = null;
+  /* Pause non-essential listeners during game */
+  if (friendsUnsub) { friendsUnsub(); friendsUnsub = null; }
+  if (presenceUnsub) { presenceUnsub(); presenceUnsub = null; }
+  if (lobbyUnsub) { lobbyUnsub(); lobbyUnsub = null; }
+  setPresence(true, true);
+  /* Pre-load room data for G.bS sync */
+  db.collection("rooms").doc(roomId).get().then(function(doc) {
+    if (doc.exists) {
+      var d = doc.data();
+      if (d.briscolaSuit) G.bS = d.briscolaSuit;
+      if (d.briscola) G.bri = d.briscola; else G.bri = null;
+    }
+  }).catch(function() {});
   showScreen("mp");
 
   mpUnsubscribe = db.collection("rooms").doc(roomId).onSnapshot(function(snap) {
@@ -1438,15 +1452,20 @@ function startMultiplayerGame(roomId, playerNum) {
     for (nk = 0; nk < newKeys.length; nk++) {
       if (!oldDM[newKeys[nk]]) {
         if (newData.currentTurn !== mpPlayer) {
-          var oppEmail = mpPlayer === 1 ? (newData.player2 ? getNick(newData.player2.email) : "Avversario") : (newData.player1 ? getNick(newData.player1.email) : "Avversario");
+          var oppNm = getPlayerNick(mpPlayer === 1 ? newData.player2 : newData.player1);
           var bn = newKeys[nk] === newData.briscolaSuit ? "+40" : "+20";
-          showT(oppEmail + " dichiara MARIOTTO! (" + SN[newKeys[nk]] + " " + bn + " punti)");
+          showT(oppNm + " dichiara MARIOTTO! (" + SN[newKeys[nk]] + " " + bn + " punti)");
         }
       }
     }
     prevDeclaredM = JSON.parse(JSON.stringify(newDM));
-    mpData = snap.data();
-    renderMP();
+    mpData = newData;
+    /* Sync single-player globals for shared functions (beats, mBon) */
+    if (newData.briscolaSuit) G.bS = newData.briscolaSuit;
+    if (newData.briscola) G.bri = newData.briscola;
+    else G.bri = null;
+    if (mpRafId) cancelAnimationFrame(mpRafId);
+    mpRafId = requestAnimationFrame(function() { mpRafId = 0; renderMP(); });
   });
 }
 
@@ -1482,6 +1501,10 @@ function renderMP() {
       }
     }
     canFuori = true;
+  }
+  /* Show toast when Mariotto available */
+  if (canDeclM && !mpData.winner) {
+    showT("Puoi dichiarare MARIOTTO!");
   }
 
   var h = "";
@@ -1635,6 +1658,13 @@ function mpPlayCard(idx) {
 
   var newTrick = (mpData.trick || []).slice();
   newTrick.push({ s: card.s, v: card.v, player: mpPlayer });
+
+  /* Optimistic local update - render immediately */
+  if (mpPlayer === 1) mpData.hand1 = newHand;
+  else mpData.hand2 = newHand;
+  mpData.trick = newTrick;
+  if (newTrick.length === 1) mpData.currentTurn = mpPlayer === 1 ? 2 : 1;
+  renderMP();
 
   var update = {};
   if (mpPlayer === 1) update.hand1 = newHand;
@@ -1963,6 +1993,7 @@ function declineChallenge() {
 function mpLeaveGame() {
   cleanupListeners();
   leaveLobby();
+  setPresence(true, false);
   showScreen("home");
   loadStats();
 }
