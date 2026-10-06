@@ -464,6 +464,11 @@ cursor:pointer;font-family:Georgia,serif;font-weight:bold}
 .pc{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin:8px 0}
 .pc img{width:40px;height:65px;border-radius:3px}
 .bs{color:#FFD700;font-size:12px;text-align:center;padding:2px}
+.lob-item{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;margin:4px 0;background:rgba(255,255,255,0.08);border-radius:8px;border:1px solid rgba(218,165,32,0.2)}
+.lob-name{color:#eee;font-size:13px}
+.lob-btn{background:linear-gradient(135deg,#DAA520,#B8860B);color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:12px;font-weight:bold;cursor:pointer;font-family:Georgia,serif}
+.lob-btn:active{transform:scale(0.95)}
+.lob-empty{color:#999;text-align:center;font-size:12px;padding:20px}
 .mlog{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;padding:2px 4px}
 .mlog-item{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:bold;border:1px solid #DAA520;background:rgba(218,165,32,0.15);color:#FFD700}
 .mlog-item.cpu{border-color:#E74C3C;background:rgba(231,76,60,0.15);color:#FF6B6B}
@@ -507,8 +512,7 @@ cursor:pointer;font-family:Georgia,serif;font-weight:bold}
 <div class="sn" id="home-stats">Caricamento statistiche...</div>
 </div>
 <button class="hbtn hb1" id="btn-vs-cpu">🤖 Gioca vs Computer</button>
-<button class="hbtn hb2" id="btn-create">🎮 Crea Partita</button>
-<button class="hbtn hb3" id="btn-join">🔗 Unisciti con Codice</button>
+<button class="hbtn hb2" id="btn-online">🎮 Gioca Online</button>
 <button class="hbtn hb4" id="btn-history">📊 Storico Partite</button>
 <button class="hbtn hb6" id="btn-logout">🚪 Esci</button>
 </div>
@@ -521,6 +525,26 @@ cursor:pointer;font-family:Georgia,serif;font-weight:bold}
 <div class="bk" id="btn-back-stats">← Indietro</div>
 <h2 style="color:#FFD700;text-align:center;margin-bottom:8px">📊 Storico Partite</h2>
 <div id="stats-body"></div>
+</div>
+</div>
+<div id="scr-lobby" class="scr">
+<div class="home">
+<h2 style="color:#FFD700;margin-bottom:8px">🎮 Giocatori Online</h2>
+<div id="lobby-list" style="max-height:40vh;overflow-y:auto;margin:8px 0"></div>
+<div style="border-top:1px solid rgba(255,255,255,0.15);margin:12px 0;padding-top:12px;text-align:center">
+<p style="color:#999;font-size:11px;margin-bottom:8px">oppure usa un codice:</p>
+<button class="hbtn hb2" id="btn-create-lobby" style="font-size:12px;padding:8px 16px">Crea con Codice</button>
+<button class="hbtn hb3" id="btn-join-lobby" style="font-size:12px;padding:8px 16px">Unisciti con Codice</button>
+</div>
+<button class="hbtn hb6" id="btn-back-lobby" style="margin-top:8px">← Indietro</button>
+</div>
+</div>
+<div id="scr-challenge" class="scr">
+<div class="home">
+<h2 style="color:#FFD700;margin-bottom:8px">⚔ Sfida ricevuta!</h2>
+<p id="challenge-msg" style="color:#eee;font-size:14px;margin:16px 0"></p>
+<button class="hbtn hb1" id="btn-accept-challenge">✅ Accetta</button>
+<button class="hbtn hb6" id="btn-decline-challenge">❌ Rifiuta</button>
 </div>
 </div>
 <div id="scr-wait" class="scr">
@@ -1005,6 +1029,8 @@ function doLogout() {
 function cleanupListeners() {
   if (mpUnsubscribe) { mpUnsubscribe(); mpUnsubscribe = null; }
   if (waitUnsubscribe) { waitUnsubscribe(); waitUnsubscribe = null; }
+  if (lobbyUnsub) { lobbyUnsub(); lobbyUnsub = null; }
+  if (challengeUnsub) { challengeUnsub(); challengeUnsub = null; }
   currentRoomId = null;
 }
 
@@ -1014,14 +1040,19 @@ function loadStats() {
   if (!hasFB || !db) { document.getElementById("stat-w").innerHTML="0"; document.getElementById("stat-l").innerHTML="0"; document.getElementById("stat-d").innerHTML="0"; return; }
   var email = currentUser.email;
   db.collection("games").where("player1", "==", email)
-    .orderBy("date", "desc").limit(50).get()
+    .limit(50).get()
     .then(function(snap1) {
       return db.collection("games").where("player2", "==", email)
-        .orderBy("date", "desc").limit(50).get()
+        .limit(50).get()
         .then(function(snap2) {
           var all = [];
           snap1.forEach(function(d) { all.push(d.data()); });
           snap2.forEach(function(d) { all.push(d.data()); });
+          all.sort(function(a, b) {
+            var da = a.date && a.date.toDate ? a.date.toDate().getTime() : 0;
+            var db2 = b.date && b.date.toDate ? b.date.toDate().getTime() : 0;
+            return db2 - da;
+          });
           var wins = 0, losses = 0, draws = 0;
           var i, g;
           for (i = 0; i < all.length; i++) {
@@ -1047,10 +1078,10 @@ function showHistory() {
   document.getElementById("stats-body").innerHTML = '<p style="color:#aaa;text-align:center">Caricamento...</p>';
 
   db.collection("games").where("player1", "==", email)
-    .orderBy("date", "desc").limit(30).get()
+    .limit(30).get()
     .then(function(snap1) {
       return db.collection("games").where("player2", "==", email)
-        .orderBy("date", "desc").limit(30).get()
+        .limit(30).get()
         .then(function(snap2) {
           var all = [];
           snap1.forEach(function(d) { all.push(d.data()); });
@@ -1283,26 +1314,24 @@ function startMultiplayerGame(roomId, playerNum) {
 function renderMP() {
   if (!mpData) return;
   var el = document.getElementById("mp-game");
+  if (!el) return;
   var myHand = mpPlayer === 1 ? mpData.hand1 : mpData.hand2;
   var oppEmail = mpPlayer === 1
     ? (mpData.player2 ? mpData.player2.email : "?")
     : (mpData.player1 ? mpData.player1.email : "?");
   var oppHandCount = mpPlayer === 1 ? (mpData.hand2 ? mpData.hand2.length : 0) : (mpData.hand1 ? mpData.hand1.length : 0);
   var myTurn = mpData.currentTurn === mpPlayer;
-  var isLeader = mpData.currentTurn === mpPlayer && mpData.trick.length === 0;
+  var isLeader = myTurn && (mpData.trick || []).length === 0;
   var briCard = mpData.briscola;
   var deck = mpData.deck || [];
   var dn = deck.length + (briCard ? 1 : 0);
-  var myPts = mpPlayer === 1 ? (mpData.points1 + mpData.mariotto1) : (mpData.points2 + mpData.mariotto2);
-  var oppPts = mpPlayer === 1 ? (mpData.points2 + mpData.mariotto2) : (mpData.points1 + mpData.mariotto1);
   var trick = mpData.trick || [];
 
-  /* Check mariotto availability */
   var myHandArr = myHand || [];
   var dm = mpData.declaredMariotto || {};
-  var mySuit = mpData.briscolaSuit;
   var canDeclM = false;
   var can7 = false;
+  var canFuori = false;
   if (isLeader && mpData.phase === "play" && !mpData.winner) {
     var ms = mSu(myHandArr, dm);
     if (ms.length > 0) canDeclM = true;
@@ -1312,12 +1341,13 @@ function renderMP() {
         if (myHandArr[ci].s === mpData.briscolaSuit && myHandArr[ci].v === "7") { can7 = true; break; }
       }
     }
+    canFuori = true;
   }
 
   var h = "";
   h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px">';
-  h += '<span class="bk" data-action="mpBack" style="font-size:11px">&larr; Esci</span>';
-  h += '<span style="color:#999;font-size:10px">' + myPts + " - " + oppPts + '</span>';
+  h += '<span class="bk" data-action="mpBack" style="font-size:11px;cursor:pointer">&larr; Esci</span>';
+  h += '<span style="color:#999;font-size:10px">' + oppEmail.split("@")[0] + '</span>';
   h += '</div>';
 
   /* Opponent */
@@ -1351,6 +1381,17 @@ function renderMP() {
   }
   h += '<div class="ma">' + statusMsg + '</div>';
 
+  /* Mariotto log */
+  var dmKeys = Object.keys(dm);
+  if (dmKeys.length > 0) {
+    h += '<div class="mlog">';
+    var mk;
+    for (mk = 0; mk < dmKeys.length; mk++) {
+      h += '<div class="mlog-item">&#9812; ' + SN[dmKeys[mk]] + '</div>';
+    }
+    h += '</div>';
+  }
+
   /* Trick */
   h += '<div class="tr">';
   var myTrickCard = null, oppTrickCard = null;
@@ -1362,7 +1403,6 @@ function renderMP() {
     if (trick[1].player === mpPlayer) myTrickCard = trick[1];
     else oppTrickCard = trick[1];
   }
-
   h += '<div class="ts' + (myTrickCard ? " has" : "") + '">';
   if (myTrickCard) h += '<img src="' + cImg(myTrickCard) + '">';
   h += '<div class="sl">Tu</div></div>';
@@ -1371,26 +1411,29 @@ function renderMP() {
   h += '<div class="sl">' + oppEmail.split("@")[0] + '</div></div>';
   h += '</div></div>';
 
-  /* Action buttons */
+  /* Action buttons — same style as single player */
   h += '<div class="br">';
-  var mc = "bn bm" + (canDeclM ? " glow" : " off");
-  h += '<div class="' + mc + '" data-action="mpDeclM">&#9812; MARIOTTO</div>';
-  var sc7 = "bn b7" + (can7 ? " glow7" : " off");
-  h += '<div class="' + sc7 + '" data-action="mpSwap7">&#8644; CAMBIO 7</div>';
+  var mc2 = "bn bm" + (canDeclM ? " glow" : " off");
+  h += '<div class="' + mc2 + '" data-action="mpDeclM">&#9812; MARIOTTO</div>';
+  var sc72 = "bn b7" + (can7 ? " glow7" : " off");
+  h += '<div class="' + sc72 + '" data-action="mpSwap7">&#8644; CAMBIO 7</div>';
+  var fc2 = "bn bf" + (canFuori ? "" : " off");
+  h += '<div class="' + fc2 + '" data-action="mpFuori">MI CHIAMO FUORI</div>';
+  h += '<div class="bn bp" data-action="mpPrese">PRESE</div>';
+  h += '<div class="bn bq" data-action="mpRules">?</div>';
   h += '</div>';
 
   /* My hand */
   h += '<div class="hr">';
-  var mi;
-  for (mi = 0; mi < myHandArr.length; mi++) {
+  var mi2;
+  for (mi2 = 0; mi2 < myHandArr.length; mi2++) {
     var canPlay = myTurn && !mpData.winner && trick.length < 2;
-    h += '<div class="hc' + (canPlay ? "" : " off") + '" data-action="mpPlay" data-i="' + mi + '"><img src="' + cImg(myHandArr[mi]) + '"></div>';
+    h += '<div class="hc' + (canPlay ? "" : " off") + '" data-action="mpPlay" data-i="' + mi2 + '"><img src="' + cImg(myHandArr[mi2]) + '"></div>';
   }
   h += '</div>';
 
   el.innerHTML = h;
 
-  /* Check if game is over */
   if (mpData.winner && mpData.winner !== "shown") {
     showMPResult();
   }
@@ -1567,8 +1610,188 @@ function mpSwap7() {
   showT("Cambio col 7 effettuato!");
 }
 
+function mpAskFuori() {
+  if (!mpData || mpData.winner) return;
+  if (mpData.currentTurn !== mpPlayer) return;
+  if ((mpData.trick || []).length !== 0) return;
+  showO('<h2>Mi Chiamo Fuori?</h2>'
+    + '<p>Se hai almeno 61 punti vinci, altrimenti perdi.</p>'
+    + '<button class="cb" data-action="mpCF" style="background:#c0392b;color:#fff;margin-bottom:8px">Si!</button>'
+    + '<button class="cb" data-action="co">No, continuo</button>');
+}
+
+function mpDoFuori() {
+  if (!hasFB || !db) return;
+  if (!mpData || !currentRoomId) return;
+  hideO();
+  var myPts = mpPlayer === 1 ? (mpData.points1 + mpData.mariotto1) : (mpData.points2 + mpData.mariotto2);
+  var win = myPts >= 61;
+  var myEmail = currentUser ? currentUser.email : "?";
+  var oppEmail = mpPlayer === 1
+    ? (mpData.player2 ? mpData.player2.email : "?")
+    : (mpData.player1 ? mpData.player1.email : "?");
+  var update = {
+    status: "finished",
+    winner: win ? myEmail : oppEmail,
+    finalScore: { p1: mpData.points1 + mpData.mariotto1, p2: mpData.points2 + mpData.mariotto2 }
+  };
+  db.collection("rooms").doc(currentRoomId).update(update);
+  if (currentUser) {
+    saveGameResult(
+      mpData.player1.email, mpData.player2.email,
+      mpData.points1, mpData.points2, mpData.mariotto1, mpData.mariotto2, "online"
+    );
+  }
+}
+
+function mpShowPrese() {
+  if (!mpData) return;
+  var prese = mpPlayer === 1 ? (mpData.prese1 || []) : (mpData.prese2 || []);
+  var h = '<h2>Le Mie Prese</h2>';
+  if (prese.length === 0) { h += '<p style="text-align:center">Nessuna presa.</p>'; }
+  else {
+    h += '<div class="pc">';
+    var i;
+    for (i = 0; i < prese.length; i++) { h += '<img src="' + cImg(prese[i]) + '">'; }
+    h += '</div>';
+  }
+  h += '<button class="cb" data-action="co">Chiudi</button>';
+  showO(h);
+}
+
+function mpShowRules() {
+  showR();
+}
+
+
+/* ===== LOBBY SYSTEM ===== */
+var lobbyUnsub = null;
+var challengeUnsub = null;
+var pendingChallengeId = null;
+
+function enterLobby() {
+  if (!hasFB || !db || !currentUser) { showT("Richiede connessione."); return; }
+  showScreen("lobby");
+  var myRef = db.collection("lobby").doc(currentUser.uid);
+  myRef.set({
+    uid: currentUser.uid,
+    email: currentUser.email,
+    ts: firebase.firestore.FieldValue.serverTimestamp(),
+    status: "waiting"
+  });
+  lobbyUnsub = db.collection("lobby").where("status", "==", "waiting").onSnapshot(function(snap) {
+    var el = document.getElementById("lobby-list");
+    if (!el) return;
+    var players = [];
+    snap.forEach(function(doc) {
+      var d = doc.data();
+      if (d.uid !== currentUser.uid) players.push(d);
+    });
+    if (players.length === 0) {
+      el.innerHTML = '<div class="lob-empty">Nessun giocatore in attesa.<br>Aspetta o invita un amico!</div>';
+    } else {
+      var h = "";
+      var pi;
+      for (pi = 0; pi < players.length; pi++) {
+        h += '<div class="lob-item"><span class="lob-name">' + players[pi].email.split("@")[0] + '</span>';
+        h += '<button class="lob-btn" data-action="challenge" data-uid="' + players[pi].uid + '" data-email="' + players[pi].email + '">Sfida!</button></div>';
+      }
+      el.innerHTML = h;
+    }
+  });
+  challengeUnsub = db.collection("challenges").where("toUid", "==", currentUser.uid).where("status", "==", "pending").onSnapshot(function(snap) {
+    snap.forEach(function(doc) {
+      var ch = doc.data();
+      pendingChallengeId = doc.id;
+      var cel = document.getElementById("challenge-msg");
+      if (cel) cel.innerHTML = ch.fromEmail.split("@")[0] + " ti sfida a Mariotto!";
+      showScreen("challenge");
+    });
+  });
+}
+
+function leaveLobby() {
+  if (lobbyUnsub) { lobbyUnsub(); lobbyUnsub = null; }
+  if (challengeUnsub) { challengeUnsub(); challengeUnsub = null; }
+  if (hasFB && db && currentUser) {
+    db.collection("lobby").doc(currentUser.uid).delete().catch(function() {});
+  }
+}
+
+function sendChallenge(toUid, toEmail) {
+  if (!hasFB || !db || !currentUser) return;
+  db.collection("challenges").add({
+    fromUid: currentUser.uid,
+    fromEmail: currentUser.email,
+    toUid: toUid,
+    toEmail: toEmail,
+    status: "pending",
+    ts: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(ref) {
+    pendingChallengeId = ref.id;
+    showT("Sfida inviata a " + toEmail.split("@")[0] + "!");
+    var chUnsub = db.collection("challenges").doc(ref.id).onSnapshot(function(snap) {
+      if (!snap.exists) return;
+      var d = snap.data();
+      if (d.status === "accepted" && d.roomId) {
+        chUnsub();
+        leaveLobby();
+        startMultiplayerGame(d.roomId, 1);
+      } else if (d.status === "declined") {
+        chUnsub();
+        showT("Sfida rifiutata.");
+      }
+    });
+  });
+}
+
+function acceptChallenge() {
+  if (!hasFB || !db || !currentUser || !pendingChallengeId) return;
+  var chRef = db.collection("challenges").doc(pendingChallengeId);
+  chRef.get().then(function(snap) {
+    if (!snap.exists) return;
+    var ch = snap.data();
+    var deck = shuf(mkDeck());
+    var hand1 = [], hand2 = [];
+    var i;
+    for (i = 0; i < 5; i++) { hand1.push(deck.pop()); hand2.push(deck.pop()); }
+    var briCard = deck.shift();
+    var roomData = {
+      code: genRoomCode(),
+      createdBy: ch.fromUid,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      status: "playing",
+      player1: { uid: ch.fromUid, email: ch.fromEmail },
+      player2: { uid: currentUser.uid, email: currentUser.email },
+      deck: JSON.parse(JSON.stringify(deck)),
+      briscola: JSON.parse(JSON.stringify(briCard)),
+      briscolaSuit: briCard.s,
+      hand1: JSON.parse(JSON.stringify(hand1)),
+      hand2: JSON.parse(JSON.stringify(hand2)),
+      trick: [], currentTurn: 1, phase: "play",
+      prese1: [], prese2: [], points1: 0, points2: 0,
+      mariotto1: 0, mariotto2: 0, declaredMariotto: {},
+      winner: null, finalScore: null
+    };
+    return db.collection("rooms").add(roomData).then(function(roomRef) {
+      return chRef.update({ status: "accepted", roomId: roomRef.id }).then(function() {
+        leaveLobby();
+        startMultiplayerGame(roomRef.id, 2);
+      });
+    });
+  });
+}
+
+function declineChallenge() {
+  if (!hasFB || !db || !pendingChallengeId) return;
+  db.collection("challenges").doc(pendingChallengeId).update({ status: "declined" });
+  pendingChallengeId = null;
+  showScreen("lobby");
+}
+
 function mpLeaveGame() {
   cleanupListeners();
+  leaveLobby();
   showScreen("home");
   loadStats();
 }
@@ -1588,8 +1811,19 @@ var _e1227=document.getElementById("btn-login");if(_e1227)_e1227.addEventListene
 var _e1228=document.getElementById("tog-login");if(_e1228)_e1228.addEventListener("click", toggleLoginMode);
 var _e1229=document.getElementById("btn-logout");if(_e1229)_e1229.addEventListener("click", doLogout);
 var _e1230=document.getElementById("btn-vs-cpu");if(_e1230)_e1230.addEventListener("click", startVsCPU);
-var _e1231=document.getElementById("btn-create");if(_e1231)_e1231.addEventListener("click", createRoom);
-var _e1232=document.getElementById("btn-join");if(_e1232)_e1232.addEventListener("click", function() { showScreen("join"); });
+var _elOnline=document.getElementById("btn-online");if(_elOnline)_elOnline.addEventListener("click", function() { enterLobby(); });
+var _elCreateLobby=document.getElementById("btn-create-lobby");if(_elCreateLobby)_elCreateLobby.addEventListener("click", function() { leaveLobby(); createRoom(); });
+var _elJoinLobby=document.getElementById("btn-join-lobby");if(_elJoinLobby)_elJoinLobby.addEventListener("click", function() { leaveLobby(); showScreen("join"); });
+var _elBackLobby=document.getElementById("btn-back-lobby");if(_elBackLobby)_elBackLobby.addEventListener("click", function() { leaveLobby(); showScreen("home"); });
+var _elAcceptCh=document.getElementById("btn-accept-challenge");if(_elAcceptCh)_elAcceptCh.addEventListener("click", function() { acceptChallenge(); });
+var _elDeclineCh=document.getElementById("btn-decline-challenge");if(_elDeclineCh)_elDeclineCh.addEventListener("click", function() { declineChallenge(); });
+var _elLobbyList=document.getElementById("lobby-list");if(_elLobbyList)_elLobbyList.addEventListener("click", function(e) {
+  var el = e.target;
+  if (el.getAttribute("data-action") === "challenge") {
+    sendChallenge(el.getAttribute("data-uid"), el.getAttribute("data-email"));
+  }
+});
+
 var _e1233=document.getElementById("btn-do-join");if(_e1233)_e1233.addEventListener("click", joinRoom);
 var _e1234=document.getElementById("btn-history");if(_e1234)_e1234.addEventListener("click", showHistory);
 var _e1235=document.getElementById("btn-back-stats");if(_e1235)_e1235.addEventListener("click", function() { showScreen("home"); });
@@ -1635,6 +1869,9 @@ var _e1269=document.getElementById("mp-game");if(_e1269)_e1269.addEventListener(
       if (a === "mpPlay") mpPlayCard(parseInt(el.getAttribute("data-i")));
       else if (a === "mpDeclM") mpDeclareM();
       else if (a === "mpSwap7") mpSwap7();
+      else if (a === "mpFuori") mpAskFuori();
+      else if (a === "mpPrese") mpShowPrese();
+      else if (a === "mpRules") mpShowRules();
       else if (a === "mpBack") mpLeaveGame();
       return;
     }
@@ -1652,6 +1889,7 @@ var _e1286=document.getElementById("ovl");if(_e1286)_e1286.addEventListener("cli
       if (a === "co") hideO();
       else if (a === "ng") { hideO(); newGame(); render(); }
       else if (a === "cf") doF();
+      else if (a === "mpCF") mpDoFuori();
       else if (a === "goHome") { hideO(); showScreen("home"); loadStats(); }
       return;
     }
