@@ -373,7 +373,7 @@ background:linear-gradient(135deg,#DAA520,#B8860B);color:#fff}
 .ltog{color:#87CEEB;font-size:12px;text-align:center;margin-top:10px;cursor:pointer;text-decoration:underline}
 
 /* ===== HOME SCREEN ===== */
-.home{padding:20px 16px}
+.home{padding:20px 16px;display:flex;flex-direction:column;justify-content:center;height:100%;max-width:400px;width:100%;margin:0 auto}
 .home h1{color:#FFD700;text-align:center;font-size:26px;margin-bottom:4px}
 .home .sub{color:#aaa;text-align:center;font-size:12px;margin-bottom:16px}
 .hstat{background:rgba(0,0,0,0.3);border:1px solid #555;border-radius:10px;padding:10px;margin-bottom:16px;text-align:center}
@@ -512,8 +512,7 @@ cursor:pointer;font-family:Georgia,serif;font-weight:bold}
 .fr-sfida:disabled{opacity:0.3;cursor:default}
 .fr-accept{background:#27AE60;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:bold;cursor:pointer}
 .fr-decline{background:#c0392b;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:bold;cursor:pointer}
-.fr-remove{background:none;border:1px solid rgba(255,255,255,0.15);color:#999;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer}
-.fr-remove:active{background:rgba(255,255,255,0.1)}
+
 .fr-empty{color:#777;text-align:center;font-size:12px;padding:16px}
 .ch-popup{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.92);border:2px solid #DAA520;border-radius:16px;padding:14px 20px;z-index:1100;text-align:center;max-width:300px;width:90%;box-shadow:0 4px 20px rgba(0,0,0,0.6)}
 .ch-popup.off{display:none}
@@ -595,6 +594,53 @@ cursor:pointer;font-family:Georgia,serif;font-weight:bold}
 @media screen and (min-width: 420px) and (min-height: 800px) {
   #app{max-width:440px}
   .hr{gap:5px}
+}
+
+/* Home, Login, Friends responsive */
+@media screen and (min-height: 750px) {
+  .home h1{font-size:32px;margin-bottom:8px}
+  .home .sub{font-size:14px;margin-bottom:20px}
+  .hstat{padding:14px;margin-bottom:20px}
+  .hstat .sn{font-size:15px}
+  .hbtn{padding:16px;font-size:17px;margin-bottom:10px;border-radius:12px}
+  .lf{padding:28px;max-width:380px}
+  .lf h2{font-size:24px;margin-bottom:18px}
+  .lf label{font-size:13px;margin-top:14px}
+  .lf input{padding:12px;font-size:16px}
+  .lbtn{padding:14px;font-size:17px;margin-top:16px;border-radius:10px}
+  .ltog{font-size:13px;margin-top:14px}
+}
+@media screen and (min-height: 900px) {
+  .home h1{font-size:38px;margin-bottom:10px}
+  .home .sub{font-size:15px;margin-bottom:24px}
+  .hstat{padding:18px;margin-bottom:24px}
+  .hstat .sn{font-size:16px}
+  .hbtn{padding:18px;font-size:18px;margin-bottom:12px;border-radius:14px}
+  .lf{padding:32px;max-width:400px}
+  .lf h2{font-size:28px}
+  .lf input{padding:14px;font-size:17px}
+  .lbtn{padding:16px;font-size:18px;border-radius:12px}
+}
+@media screen and (max-height: 600px) {
+  .home h1{font-size:22px;margin-bottom:2px}
+  .home .sub{font-size:11px;margin-bottom:8px}
+  .hstat{padding:6px;margin-bottom:8px}
+  .hstat .sn{font-size:11px}
+  .hbtn{padding:9px;font-size:13px;margin-bottom:5px;border-radius:8px}
+  .lf{padding:14px}
+  .lf h2{font-size:18px;margin-bottom:8px}
+  .lf label{font-size:11px;margin-top:6px}
+  .lf input{padding:6px 8px;font-size:13px}
+  .lbtn{padding:8px;font-size:13px;margin-top:8px}
+  .ltog{font-size:11px;margin-top:6px}
+}
+@media screen and (max-width: 360px) {
+  .home{padding:12px 10px}
+  .lf{padding:14px;max-width:300px}
+}
+@media screen and (min-width: 420px) {
+  .home{max-width:420px}
+  .lf{max-width:380px}
 }
 </style>
 </head><body>
@@ -1497,6 +1543,7 @@ var mpPlayer = 0; /* 1 or 2 */
 var mpData = null;
 var prevDeclaredM = null;
 var prevBriscola = null;
+var mpResultShown = false;
 var mpRafId = 0;
 
 function startMultiplayerGame(roomId, playerNum) {
@@ -1505,6 +1552,7 @@ function startMultiplayerGame(roomId, playerNum) {
   currentRoomId = roomId;
   prevDeclaredM = null;
   prevBriscola = null;
+  mpResultShown = false;
   var mpEl = document.getElementById("mp-game"); if (mpEl) mpEl.removeAttribute("data-init");
   /* Pause non-essential listeners during game */
   if (friendsUnsub) { friendsUnsub(); friendsUnsub = null; }
@@ -1773,7 +1821,8 @@ function renderMP() {
     }
   }
 
-  if (mpData.winner && mpData.winner !== "shown") {
+  if (mpData.winner && !mpResultShown) {
+    mpResultShown = true;
     showMPResult();
   }
 }
@@ -1835,6 +1884,7 @@ function mpRequestRematch() {
 function mpAcceptRematch() {
   if (!hasFB || !db || !currentRoomId || !mpData) return;
   hideO();
+  showT("Preparando rivincita...");
   /* Create new room with same players */
   var newDeck = shuf(mkDeck());
   var newH1 = [], newH2 = [], di;
@@ -2409,11 +2459,6 @@ function addFriend() {
     });
 }
 
-function removeFriend(docId) {
-  if (!hasFB || !db) return;
-  db.collection("friends").doc(docId).delete().catch(function(){});
-}
-
 function acceptFriendRequest(docId) {
   if (!hasFB || !db || !currentUser) return;
   db.collection("friends").doc(docId).update({
@@ -2600,7 +2645,6 @@ function renderFriendsScreen() {
       if (fr.status === "accepted" && isOnline && !isInGame && pres && pres.uid) {
         lh += '<button class="fr-sfida" data-fr-action="challenge" data-fr-email="' + fEmail + '" data-fr-uid="' + pres.uid + '">Sfida!</button>';
       }
-      lh += '<button class="fr-remove" data-fr-action="remove" data-fr-id="' + fr._id + '">&#10005;</button>';
       lh += '</div></div>';
     }
     lh += '</div>';
@@ -2681,7 +2725,7 @@ var _eFrList=document.getElementById("friend-list");if(_eFrList)_eFrList.addEven
     action = el.getAttribute("data-fr-action");
     if (action) {
       if (action === "challenge") sendFriendChallenge(el.getAttribute("data-fr-email"), el.getAttribute("data-fr-uid"));
-      else if (action === "remove") removeFriend(el.getAttribute("data-fr-id"));
+
       return;
     }
     el = el.parentNode;
