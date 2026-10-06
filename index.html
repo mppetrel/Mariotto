@@ -529,6 +529,10 @@ cursor:pointer;font-family:Georgia,serif;font-weight:bold}
 <div id="login-mode-label" style="color:#FFD700;text-align:center;font-size:14px;margin-bottom:6px">Accedi</div>
 <label>Email</label>
 <input type="email" id="inp-email" autocomplete="email">
+<div id="nick-row" style="display:none">
+<label>Nickname</label>
+<input type="text" id="inp-nick" maxlength="15" placeholder="Come ti chiami?" autocomplete="off">
+</div>
 <label>Password</label>
 <input type="password" id="inp-pass" autocomplete="current-password">
 <div id="login-err" class="err"></div>
@@ -648,8 +652,13 @@ function initFirebase() {
       auth.onAuthStateChanged(function(user) {
         if (user) {
           currentUser = user;
+          myNickname = user.displayName || "";
+          loadNickname(user.uid, function(nick) {
+            myNickname = nick || user.displayName || user.email.split("@")[0];
+            document.getElementById("home-email").innerHTML = myNickname;
+          });
           showScreen("home");
-          document.getElementById("home-email").innerHTML = user.email || "";
+          document.getElementById("home-email").innerHTML = myNickname || user.displayName || getNick(user.email);
           loadStats();
           setPresence(true, false);
           listenForChallenges();
@@ -746,6 +755,42 @@ var VA=["asso","2","3","4","5","6","7","fante","cavallo","re"];
 var PT={asso:11,"2":0,"3":10,"4":0,"5":0,"6":0,"7":0,fante:2,cavallo:3,re:4};
 var RK={asso:10,"2":1,"3":9,"4":2,"5":3,"6":4,"7":5,fante:6,cavallo:7,re:8};
 var SN={coppe:"Coppe",denari:"Denari",spade:"Spade",bastoni:"Bastoni"};
+
+
+function loadNickname(uid, cb) {
+  if (!hasFB || !db) { cb(""); return; }
+  db.collection("users").doc(uid).get().then(function(doc) {
+    if (doc.exists && doc.data().nickname) {
+      var n = doc.data().nickname;
+      nickCache[uid] = n;
+      cb(n);
+    } else {
+      cb("");
+    }
+  }).catch(function() { cb(""); });
+}
+
+function resolveNick(email, uid, fallback) {
+  if (uid && nickCache[uid]) return nickCache[uid];
+  if (!uid || !hasFB || !db) return fallback || getNick(email);
+  db.collection("users").doc(uid).get().then(function(doc) {
+    if (doc.exists && doc.data().nickname) {
+      nickCache[uid] = doc.data().nickname;
+    }
+  }).catch(function() {});
+  return fallback || getNick(email);
+}
+
+function getNick(email) {
+  if (!email) return "?";
+  return email.split("@")[0];
+}
+
+function getPlayerNick(playerObj) {
+  if (!playerObj) return "?";
+  if (playerObj.nick) return playerObj.nick;
+  return getNick(playerObj.email);
+}
 
 function cImg(c){return CI[c.s+"_"+c.v];}
 
@@ -1037,35 +1082,55 @@ function toggleLoginMode() {
     ? "Hai gia un account? Accedi"
     : "Non hai un account? Registrati";
   document.getElementById("login-err").innerHTML = "";
+  var nr = document.getElementById("nick-row");
+  if (nr) nr.style.display = isRegMode ? "block" : "none";
 }
 
 function doLogin() {
-  if (!hasFB) { currentUser={uid:"local",email:"Giocatore"}; showScreen("home"); document.getElementById("home-email").innerHTML="Modalita offline"; return; }
+  if (!hasFB) { currentUser={uid:"local",email:"Giocatore"}; myNickname="Giocatore"; showScreen("home"); document.getElementById("home-email").innerHTML="Modalita offline"; return; }
   var email = document.getElementById("inp-email").value.trim();
   var pass = document.getElementById("inp-pass").value;
+  var nickInp = document.getElementById("inp-nick");
+  var nick = nickInp ? nickInp.value.trim() : "";
   var errEl = document.getElementById("login-err");
   errEl.innerHTML = "";
   if (!email || !pass) { errEl.innerHTML = "Compila tutti i campi."; return; }
   if (pass.length < 6) { errEl.innerHTML = "Password minimo 6 caratteri."; return; }
+  if (isRegMode && !nick) { errEl.innerHTML = "Scegli un nickname!"; return; }
+  if (isRegMode && nick.length < 2) { errEl.innerHTML = "Nickname troppo corto (min 2 caratteri)."; return; }
 
-  var promise;
   if (isRegMode) {
-    promise = auth.createUserWithEmailAndPassword(email, pass);
+    auth.createUserWithEmailAndPassword(email, pass).then(function(cred) {
+      var user = cred.user;
+      return user.updateProfile({ displayName: nick }).then(function() {
+        return db.collection("users").doc(user.uid).set({
+          email: email.toLowerCase(),
+          nickname: nick,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      });
+    }).then(function() {
+      errEl.innerHTML = "";
+    }).catch(function(err) {
+      var msg = "Errore di registrazione.";
+      if (err.code === "auth/email-already-in-use") msg = "Email gia in uso.";
+      else if (err.code === "auth/invalid-email") msg = "Email non valida.";
+      else if (err.code === "auth/weak-password") msg = "Password troppo debole.";
+      else if (err.message) msg = err.message;
+      errEl.innerHTML = msg;
+    });
   } else {
-    promise = auth.signInWithEmailAndPassword(email, pass);
+    auth.signInWithEmailAndPassword(email, pass).then(function() {
+      errEl.innerHTML = "";
+    }).catch(function(err) {
+      var msg = "Errore di autenticazione.";
+      if (err.code === "auth/user-not-found") msg = "Utente non trovato.";
+      else if (err.code === "auth/wrong-password") msg = "Password errata.";
+      else if (err.code === "auth/invalid-email") msg = "Email non valida.";
+      else if (err.message) msg = err.message;
+      errEl.innerHTML = msg;
+    });
   }
-  promise.then(function() {
-    errEl.innerHTML = "";
-  }).catch(function(err) {
-    var msg = "Errore di autenticazione.";
-    if (err.code === "auth/user-not-found") msg = "Utente non trovato.";
-    else if (err.code === "auth/wrong-password") msg = "Password errata.";
-    else if (err.code === "auth/email-already-in-use") msg = "Email gia in uso.";
-    else if (err.code === "auth/invalid-email") msg = "Email non valida.";
-    else if (err.code === "auth/weak-password") msg = "Password troppo debole.";
-    else if (err.message) msg = err.message;
-    errEl.innerHTML = msg;
-  });
 }
 
 /* Firebase auth handled by initFirebase/startOffline */
@@ -1282,7 +1347,7 @@ function createRoom() {
     createdBy: currentUser.uid,
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     status: "waiting",
-    player1: { uid: currentUser.uid, email: currentUser.email },
+    player1: { uid: currentUser.uid, email: currentUser.email, nick: myNickname },
     player2: null,
     deck: JSON.parse(JSON.stringify(deck)),
     briscola: JSON.parse(JSON.stringify(briCard)),
@@ -1336,7 +1401,7 @@ function joinRoom() {
         return;
       }
       return db.collection("rooms").doc(doc.id).update({
-        player2: { uid: currentUser.uid, email: currentUser.email },
+        player2: { uid: currentUser.uid, email: currentUser.email, nick: myNickname },
         status: "playing"
       }).then(function() {
         currentRoomId = doc.id;
@@ -1349,17 +1414,37 @@ function joinRoom() {
 }
 
 /* ===== MULTIPLAYER GAME ===== */
+var myNickname = '';
+var nickCache = {};
 var mpPlayer = 0; /* 1 or 2 */
 var mpData = null;
+var prevDeclaredM = null;
 
 function startMultiplayerGame(roomId, playerNum) {
   if (!hasFB || !db) return;
   mpPlayer = playerNum;
   currentRoomId = roomId;
+  prevDeclaredM = null;
   showScreen("mp");
 
   mpUnsubscribe = db.collection("rooms").doc(roomId).onSnapshot(function(snap) {
     if (!snap.exists) { showT("Stanza eliminata."); showScreen("home"); return; }
+    var newData = snap.data();
+    /* Detect opponent Mariotto declaration */
+    var newDM = newData.declaredMariotto || {};
+    var oldDM = prevDeclaredM || {};
+    var newKeys = Object.keys(newDM);
+    var nk;
+    for (nk = 0; nk < newKeys.length; nk++) {
+      if (!oldDM[newKeys[nk]]) {
+        if (newData.currentTurn !== mpPlayer) {
+          var oppEmail = mpPlayer === 1 ? (newData.player2 ? getNick(newData.player2.email) : "Avversario") : (newData.player1 ? getNick(newData.player1.email) : "Avversario");
+          var bn = newKeys[nk] === newData.briscolaSuit ? "+40" : "+20";
+          showT(oppEmail + " dichiara MARIOTTO! (" + SN[newKeys[nk]] + " " + bn + " punti)");
+        }
+      }
+    }
+    prevDeclaredM = JSON.parse(JSON.stringify(newDM));
     mpData = snap.data();
     renderMP();
   });
@@ -1373,6 +1458,7 @@ function renderMP() {
   var oppEmail = mpPlayer === 1
     ? (mpData.player2 ? mpData.player2.email : "?")
     : (mpData.player1 ? mpData.player1.email : "?");
+  var oppNick = getPlayerNick(mpPlayer === 1 ? mpData.player2 : mpData.player1);
   var oppHandCount = mpPlayer === 1 ? (mpData.hand2 ? mpData.hand2.length : 0) : (mpData.hand1 ? mpData.hand1.length : 0);
   var myTurn = mpData.currentTurn === mpPlayer;
   var isLeader = myTurn && (mpData.trick || []).length === 0;
@@ -1401,11 +1487,11 @@ function renderMP() {
   var h = "";
   h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px">';
   h += '<span class="bk" data-action="mpBack" style="font-size:11px;cursor:pointer">&larr; Esci</span>';
-  h += '<span style="color:#999;font-size:10px">' + oppEmail.split("@")[0] + '</span>';
+  h += '<span style="color:#999;font-size:10px">' + oppNick + '</span>';
   h += '</div>';
 
   /* Opponent */
-  h += '<div class="or"><span class="ol">' + oppEmail.split("@")[0] + '</span>';
+  h += '<div class="or"><span class="ol">' + oppNick + '</span>';
   if (!myTurn && !mpData.winner) h += '<span class="tb">Turno</span>';
   h += '</div>';
   h += '<div class="or">';
@@ -1441,7 +1527,14 @@ function renderMP() {
     h += '<div class="mlog">';
     var mk;
     for (mk = 0; mk < dmKeys.length; mk++) {
-      h += '<div class="mlog-item">&#9812; ' + SN[dmKeys[mk]] + '</div>';
+      var whoDecl = dm[dmKeys[mk]];
+      var declName = "";
+      if (whoDecl === mpPlayer) { declName = "Tu"; }
+      else if (whoDecl === true) { declName = ""; }
+      else { declName = (mpPlayer === 1 ? (mpData.player2 ? getNick(mpData.player2.email) : "Avv") : (mpData.player1 ? getNick(mpData.player1.email) : "Avv")); }
+      var declBonus = dmKeys[mk] === mpData.briscolaSuit ? "+40" : "+20";
+      var isMine = whoDecl === mpPlayer;
+      h += '<div class="mlog-item' + (isMine ? '' : ' cpu') + '">&#9812; ' + (declName ? declName + ": " : "") + SN[dmKeys[mk]] + ' ' + declBonus + '</div>';
     }
     h += '</div>';
   }
@@ -1462,7 +1555,7 @@ function renderMP() {
   h += '<div class="sl">Tu</div></div>';
   h += '<div class="ts' + (oppTrickCard ? " has" : "") + '">';
   if (oppTrickCard) h += '<img src="' + cImg(oppTrickCard) + '">';
-  h += '<div class="sl">' + oppEmail.split("@")[0] + '</div></div>';
+  h += '<div class="sl">' + oppNick + '</div></div>';
   h += '</div></div>';
 
   /* Action buttons — same style as single player */
@@ -1499,12 +1592,32 @@ function showMPResult() {
   var t2 = mpData.points2 + mpData.mariotto2;
   var myTotal = mpPlayer === 1 ? t1 : t2;
   var oppTotal = mpPlayer === 1 ? t2 : t1;
-  var result = myTotal > oppTotal ? "HAI VINTO!" : oppTotal > myTotal ? "HAI PERSO!" : "PAREGGIO!";
-  var rc = myTotal > oppTotal ? "color:#2ECC71" : oppTotal > myTotal ? "color:#E74C3C" : "color:#87CEEB";
-  showO('<h2 style="' + rc + '">' + result + '</h2>'
-    + '<p>Tu: <strong>' + myTotal + '</strong></p>'
-    + '<p>Avversario: <strong>' + oppTotal + '</strong></p>'
-    + '<button class="cb" data-action="goHome">Torna al Menu</button>');
+  var myEmail = currentUser ? currentUser.email : "?";
+  var result, rc;
+  if (mpData.calledFuori) {
+    var iWonFuori = mpData.winner === myEmail;
+    var iCalledFuori = mpData.fuoriBy === myEmail;
+    result = iWonFuori ? "HAI VINTO!" : "HAI PERSO!";
+    rc = iWonFuori ? "color:#2ECC71" : "color:#E74C3C";
+    var fuoriName = mpData.fuoriBy ? getNick(mpData.fuoriBy) : "?";
+    var fuoriPts = mpData.fuoriPts || 0;
+    var fuoriMsg = iCalledFuori
+      ? "Ti sei chiamato fuori con " + fuoriPts + " punti."
+      : fuoriName + " si e\' chiamato fuori con " + fuoriPts + " punti.";
+    var fuoriResult = fuoriPts >= 61 ? "Raggiunto 61 - vince!" : "Non raggiunge 61 - perde!";
+    showO('<h2 style="' + rc + '">' + result + '</h2>'
+      + '<p>' + fuoriMsg + '</p>'
+      + '<p>' + fuoriResult + '</p>'
+      + '<p>Tu: <strong>' + myTotal + '</strong> - Avversario: <strong>' + oppTotal + '</strong></p>'
+      + '<button class="cb" data-action="goHome">Torna al Menu</button>');
+  } else {
+    result = myTotal > oppTotal ? "HAI VINTO!" : oppTotal > myTotal ? "HAI PERSO!" : "PAREGGIO!";
+    rc = myTotal > oppTotal ? "color:#2ECC71" : oppTotal > myTotal ? "color:#E74C3C" : "color:#87CEEB";
+    showO('<h2 style="' + rc + '">' + result + '</h2>'
+      + '<p>Tu: <strong>' + myTotal + '</strong></p>'
+      + '<p>Avversario: <strong>' + oppTotal + '</strong></p>'
+      + '<button class="cb" data-action="goHome">Torna al Menu</button>');
+  }
 }
 
 /* ===== MP ACTIONS ===== */
@@ -1625,7 +1738,7 @@ function mpDeclareM() {
   for (i = 0; i < ms.length; i++) {
     var b = mBon(ms[i]);
     bonus += b;
-    newDM[ms[i]] = true;
+    newDM[ms[i]] = mpPlayer;
   }
 
   var update = { declaredMariotto: newDM };
@@ -1684,9 +1797,13 @@ function mpDoFuori() {
   var oppEmail = mpPlayer === 1
     ? (mpData.player2 ? mpData.player2.email : "?")
     : (mpData.player1 ? mpData.player1.email : "?");
+  var oppNick = getPlayerNick(mpPlayer === 1 ? mpData.player2 : mpData.player1);
   var update = {
     status: "finished",
     winner: win ? myEmail : oppEmail,
+    calledFuori: true,
+    fuoriBy: myEmail,
+    fuoriPts: myPts,
     finalScore: { p1: mpData.points1 + mpData.mariotto1, p2: mpData.points2 + mpData.mariotto2 }
   };
   db.collection("rooms").doc(currentRoomId).update(update);
@@ -1747,7 +1864,7 @@ function enterLobby() {
       var h = "";
       var pi;
       for (pi = 0; pi < players.length; pi++) {
-        h += '<div class="lob-item"><span class="lob-name">' + players[pi].email.split("@")[0] + '</span>';
+        h += '<div class="lob-item"><span class="lob-name">' + (players[pi].nick || getNick(players[pi].email)) + '</span>';
         h += '<button class="lob-btn" data-action="challenge" data-uid="' + players[pi].uid + '" data-email="' + players[pi].email + '">Sfida!</button></div>';
       }
       el.innerHTML = h;
@@ -1758,7 +1875,7 @@ function enterLobby() {
       var ch = doc.data();
       pendingChallengeId = doc.id;
       var cel = document.getElementById("challenge-msg");
-      if (cel) cel.innerHTML = ch.fromEmail.split("@")[0] + " ti sfida a Mariotto!";
+      if (cel) cel.innerHTML = getNick(ch.fromEmail) + " ti sfida a Mariotto!";
       showScreen("challenge");
     });
   });
@@ -1783,7 +1900,7 @@ function sendChallenge(toUid, toEmail) {
     ts: firebase.firestore.FieldValue.serverTimestamp()
   }).then(function(ref) {
     pendingChallengeId = ref.id;
-    showT("Sfida inviata a " + toEmail.split("@")[0] + "!");
+    showT("Sfida inviata a " + getNick(toEmail) + "!");
     var chUnsub = db.collection("challenges").doc(ref.id).onSnapshot(function(snap) {
       if (!snap.exists) return;
       var d = snap.data();
@@ -1816,7 +1933,7 @@ function acceptChallenge() {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       status: "playing",
       player1: { uid: ch.fromUid, email: ch.fromEmail },
-      player2: { uid: currentUser.uid, email: currentUser.email },
+      player2: { uid: currentUser.uid, email: currentUser.email, nick: myNickname },
       deck: JSON.parse(JSON.stringify(deck)),
       briscola: JSON.parse(JSON.stringify(briCard)),
       briscolaSuit: briCard.s,
@@ -1908,7 +2025,7 @@ function listenForChallenges() {
 function showChallengePopup(fromEmail) {
   var popup = document.getElementById("ch-popup");
   if (!popup) return;
-  var name = fromEmail.split("@")[0];
+  var name = getNick(fromEmail);
   popup.innerHTML = '<h3>&#9876; Sfida!</h3>'
     + '<p><strong>' + name + '</strong> ti sfida a Mariotto!</p>'
     + '<div class="ch-btns">'
@@ -1946,7 +2063,7 @@ function acceptFriendChallenge() {
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     status: "playing",
     player1: { uid: chData.fromUid, email: chData.fromEmail },
-    player2: { uid: currentUser.uid, email: currentUser.email },
+    player2: { uid: currentUser.uid, email: currentUser.email, nick: myNickname },
     deck: JSON.parse(JSON.stringify(deck)),
     briscola: JSON.parse(JSON.stringify(briCard)),
     briscolaSuit: briCard.s,
@@ -2012,7 +2129,7 @@ function addFriend() {
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       }).then(function() {
         inp.value = "";
-        showT("Richiesta inviata a " + email.split("@")[0] + "!");
+        showT("Richiesta inviata a " + getNick(email) + "!");
       }).catch(function(e) {
         errEl.innerHTML = "Errore: " + e.message;
       });
@@ -2062,7 +2179,7 @@ function sendFriendChallenge(friendEmail, friendUid) {
     status: "pending",
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   }).then(function(docRef) {
-    showT("Sfida inviata a " + friendEmail.split("@")[0] + "!");
+    showT("Sfida inviata a " + getNick(friendEmail) + "!");
     var chRef = db.collection("challenges").doc(docRef.id);
     var chUnsub = chRef.onSnapshot(function(snap) {
       if (!snap.exists) return;
@@ -2164,7 +2281,7 @@ function renderFriendsScreen() {
     var r, rName;
     for (var ri = 0; ri < pendingRequests.length; ri++) {
       r = pendingRequests[ri];
-      rName = r.requestedBy.split("@")[0];
+      rName = getNick(r.requestedBy);
       rh += '<div class="fr-item">';
       rh += '<div class="fr-info"><span class="fr-name">' + rName + '</span></div>';
       rh += '<div class="fr-actions">';
@@ -2185,8 +2302,8 @@ function renderFriendsScreen() {
     for (fi = 0; fi < friendsList.length; fi++) {
       fr = friendsList[fi];
       fEmail = fr.user1 === myEmail ? fr.user2 : fr.user1;
-      fName = fEmail.split("@")[0];
       pres = presenceMap[fEmail.toLowerCase()];
+      fName = (pres && pres.nick) ? pres.nick : getNick(fEmail);
       isOnline = pres && pres.online;
       isInGame = pres && pres.inGame;
 
