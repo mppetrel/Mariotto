@@ -1505,6 +1505,7 @@ function startMultiplayerGame(roomId, playerNum) {
   currentRoomId = roomId;
   prevDeclaredM = null;
   prevBriscola = null;
+  var mpEl = document.getElementById("mp-game"); if (mpEl) mpEl.removeAttribute("data-init");
   /* Pause non-essential listeners during game */
   if (friendsUnsub) { friendsUnsub(); friendsUnsub = null; }
   if (presenceUnsub) { presenceUnsub(); presenceUnsub = null; }
@@ -1547,6 +1548,29 @@ function startMultiplayerGame(roomId, playerNum) {
       }
     }
     prevBriscola = newBri ? JSON.parse(JSON.stringify(newBri)) : null;
+    /* Detect rematch */
+    if (newData.rematchStatus === "pending" && newData.rematchBy !== currentUser.uid) {
+      var rmNick = newData.rematchByNick || "Avversario";
+      showO('<h2 style="color:#FFD700">Bella?</h2>'
+        + '<p style="text-align:center">' + rmNick + ' vuole la rivincita!</p>'
+        + '<div style="display:flex;gap:10px;justify-content:center;margin-top:12px">'
+        + '<button class="cb" data-action="mpRemYes" style="background:#27AE60;color:#fff">Si!</button>'
+        + '<button class="cb" data-action="mpRemNo" style="background:#c0392b;color:#fff">No</button>'
+        + '</div>');
+    }
+    if (newData.rematchStatus === "accepted" && newData.rematchRoomId) {
+      var newRoomId = newData.rematchRoomId;
+      /* Clean up current listener */
+      if (mpUnsubscribe) { mpUnsubscribe(); mpUnsubscribe = null; }
+      hideO();
+      /* Join the new room - figure out which player I am */
+      var myP = (newData.player1 && newData.player1.uid === currentUser.uid) ? 1 : 2;
+      startMultiplayerGame(newRoomId, myP);
+    }
+    if (newData.rematchStatus === "declined" && newData.rematchBy === currentUser.uid) {
+      showT("Rivincita rifiutata!");
+      setTimeout(function() { mpLeaveGame(); }, 1500);
+    }
     mpData = newData;
     /* Sync single-player globals for shared functions (beats, mBon) */
     if (newData.briscolaSuit) G.bS = newData.briscolaSuit;
@@ -1573,7 +1597,6 @@ function renderMP() {
   var deck = mpData.deck || [];
   var dn = deck.length + (briCard ? 1 : 0);
   var trick = mpData.trick || [];
-
   var myHandArr = myHand || [];
   var dm = mpData.declaredMariotto || {};
   var canDeclM = false;
@@ -1590,107 +1613,165 @@ function renderMP() {
     }
     canFuori = true;
   }
-  /* Show toast when Mariotto available */
   if (canDeclM && !mpData.winner) {
     showT("Puoi dichiarare MARIOTTO!");
   }
 
-  var h = "";
-  h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px">';
-  h += '<span class="bk" data-action="mpBack" style="font-size:11px;cursor:pointer">&larr; Esci</span>';
-  h += '<span style="color:#999;font-size:10px">' + oppNick + '</span>';
-  h += '</div>';
+  /* Build structure once, update parts after */
+  if (!el.getAttribute("data-init")) {
+    el.setAttribute("data-init", "1");
+    var h = "";
+    h += '<div id="mp-top" style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px">';
+    h += '<span class="bk" data-action="mpBack" style="font-size:11px;cursor:pointer">&larr; Esci</span>';
+    h += '<span id="mp-opp-top" style="color:#999;font-size:10px"></span>';
+    h += '</div>';
+    h += '<div class="or"><span class="ol" id="mp-opp-name"></span><span id="mp-turn-badge"></span></div>';
+    h += '<div class="or" id="mp-opp-cards"></div>';
+    h += '<div class="mid">';
+    h += '<div class="deckrow"><div id="mp-bri-wrap" class="bw"></div>';
+    h += '<div class="dw"><div id="mp-deck-card"></div><div class="dc" id="mp-deck-count"></div></div>';
+    h += '<div id="mp-bri-suit" class="bs"></div></div>';
+    h += '<div class="ma" id="mp-status"></div>';
+    h += '<div id="mp-mlog" class="mlog"></div>';
+    h += '<div class="tr" id="mp-trick"></div>';
+    h += '</div>';
+    h += '<div class="br" id="mp-buttons"></div>';
+    h += '<div class="hr" id="mp-hand"></div>';
+    el.innerHTML = h;
+  }
 
-  /* Opponent */
-  h += '<div class="or"><span class="ol">' + oppNick + '</span>';
-  if (!myTurn && !mpData.winner) h += '<span class="tb">Turno</span>';
-  h += '</div>';
-  h += '<div class="or">';
-  var oi;
-  for (oi = 0; oi < oppHandCount; oi++) h += '<div class="oback">M</div>';
-  h += '</div>';
+  /* Update opponent info */
+  var oppTopEl = document.getElementById("mp-opp-top");
+  if (oppTopEl) oppTopEl.innerHTML = oppNick;
+  var oppNameEl = document.getElementById("mp-opp-name");
+  if (oppNameEl) oppNameEl.innerHTML = oppNick;
+  var turnEl = document.getElementById("mp-turn-badge");
+  if (turnEl) turnEl.innerHTML = (!myTurn && !mpData.winner) ? '<span class="tb">Turno</span>' : "";
 
-  /* Middle area */
-  h += '<div class="mid">';
-  h += '<div class="deckrow">';
-  if (briCard) h += '<div class="bw"><img src="' + cImg(briCard) + '"></div>';
-  h += '<div class="dw">';
-  if (dn > 0) h += '<div class="dback">M</div><div class="dc">' + dn + '</div>';
-  else h += '<div class="dc">Vuoto</div>';
-  h += '</div>';
-  if (!briCard && mpData.briscolaSuit) h += '<div class="bs">Briscola: ' + SN[mpData.briscolaSuit] + '</div>';
-  h += '</div>';
+  /* Opponent cards */
+  var oppEl = document.getElementById("mp-opp-cards");
+  if (oppEl) {
+    var oh = "", oi;
+    for (oi = 0; oi < oppHandCount; oi++) oh += '<div class="oback">M</div>';
+    if (oppEl.childNodes.length !== oppHandCount) oppEl.innerHTML = oh;
+  }
+
+  /* Briscola */
+  var briEl = document.getElementById("mp-bri-wrap");
+  if (briEl) {
+    if (briCard) {
+      var briKey = briCard.s + "_" + briCard.v;
+      if (briEl.getAttribute("data-k") !== briKey) {
+        briEl.innerHTML = '<img src="' + cImg(briCard) + '">';
+        briEl.setAttribute("data-k", briKey);
+      }
+    } else { if (briEl.innerHTML !== "") briEl.innerHTML = ""; }
+  }
+  var briSuitEl = document.getElementById("mp-bri-suit");
+  if (briSuitEl) {
+    if (!briCard && mpData.briscolaSuit) briSuitEl.innerHTML = "Briscola: " + SN[mpData.briscolaSuit];
+    else briSuitEl.innerHTML = "";
+  }
+
+  /* Deck */
+  var deckCardEl = document.getElementById("mp-deck-card");
+  if (deckCardEl) {
+    if (dn > 0) { if (!deckCardEl.firstChild || !deckCardEl.firstChild.className || deckCardEl.firstChild.className !== "dback") deckCardEl.innerHTML = '<div class="dback">M</div>'; }
+    else deckCardEl.innerHTML = "";
+  }
+  var deckCntEl = document.getElementById("mp-deck-count");
+  if (deckCntEl) deckCntEl.innerHTML = dn > 0 ? "" + dn : "Vuoto";
 
   /* Status message */
-  var statusMsg = "";
-  if (mpData.winner) {
-    statusMsg = "Partita finita!";
-  } else if (myTurn) {
-    statusMsg = trick.length === 0 ? "Sei di mano. Gioca!" : "Rispondi alla carta!";
-  } else {
-    statusMsg = "Aspetta il turno...";
+  var statusEl = document.getElementById("mp-status");
+  if (statusEl) {
+    var statusMsg = "";
+    if (mpData.winner) statusMsg = "Partita finita!";
+    else if (myTurn) statusMsg = trick.length === 0 ? "Sei di mano. Gioca!" : "Rispondi alla carta!";
+    else statusMsg = "Aspetta il turno...";
+    statusEl.innerHTML = statusMsg;
   }
-  h += '<div class="ma">' + statusMsg + '</div>';
 
   /* Mariotto log */
-  var dmKeys = Object.keys(dm);
-  if (dmKeys.length > 0) {
-    h += '<div class="mlog">';
-    var mk;
-    for (mk = 0; mk < dmKeys.length; mk++) {
-      var whoDecl = dm[dmKeys[mk]];
-      var declName = "";
-      if (whoDecl === mpPlayer) { declName = "Tu"; }
-      else if (whoDecl === true) { declName = ""; }
-      else { declName = (mpPlayer === 1 ? (mpData.player2 ? getNick(mpData.player2.email) : "Avv") : (mpData.player1 ? getNick(mpData.player1.email) : "Avv")); }
-      var declBonus = dmKeys[mk] === mpData.briscolaSuit ? "+40" : "+20";
-      var isMine = whoDecl === mpPlayer;
-      h += '<div class="mlog-item' + (isMine ? '' : ' cpu') + '">&#9812; ' + (declName ? declName + ": " : "") + SN[dmKeys[mk]] + ' ' + declBonus + '</div>';
+  var mlogEl = document.getElementById("mp-mlog");
+  if (mlogEl) {
+    var dmKeys = Object.keys(dm);
+    if (dmKeys.length > 0) {
+      var mh = "", mk;
+      for (mk = 0; mk < dmKeys.length; mk++) {
+        var whoDecl = dm[dmKeys[mk]];
+        var declName = "";
+        if (whoDecl === mpPlayer) { declName = "Tu"; }
+        else if (whoDecl === true) { declName = ""; }
+        else { declName = getPlayerNick(mpPlayer === 1 ? mpData.player2 : mpData.player1); }
+        var declBonus = dmKeys[mk] === mpData.briscolaSuit ? "+40" : "+20";
+        var isMine = whoDecl === mpPlayer;
+        mh += '<div class="mlog-item' + (isMine ? '' : ' cpu') + '">&#9812; ' + (declName ? declName + ": " : "") + SN[dmKeys[mk]] + ' ' + declBonus + '</div>';
+      }
+      mlogEl.innerHTML = mh;
+    } else { mlogEl.innerHTML = ""; }
+  }
+
+  /* Trick area */
+  var trickEl = document.getElementById("mp-trick");
+  if (trickEl) {
+    var myTrickCard = null, oppTrickCard = null;
+    if (trick.length >= 1) {
+      if (trick[0].player === mpPlayer) myTrickCard = trick[0]; else oppTrickCard = trick[0];
     }
-    h += '</div>';
+    if (trick.length >= 2) {
+      if (trick[1].player === mpPlayer) myTrickCard = trick[1]; else oppTrickCard = trick[1];
+    }
+    var tKey = (myTrickCard ? myTrickCard.s + myTrickCard.v : "x") + "_" + (oppTrickCard ? oppTrickCard.s + oppTrickCard.v : "x");
+    if (trickEl.getAttribute("data-k") !== tKey) {
+      var th = "";
+      th += '<div class="ts' + (myTrickCard ? " has" : "") + '">';
+      if (myTrickCard) th += '<img src="' + cImg(myTrickCard) + '">';
+      th += '<div class="sl">Tu</div></div>';
+      th += '<div class="ts' + (oppTrickCard ? " has" : "") + '">';
+      if (oppTrickCard) th += '<img src="' + cImg(oppTrickCard) + '">';
+      th += '<div class="sl">' + oppNick + '</div></div>';
+      trickEl.innerHTML = th;
+      trickEl.setAttribute("data-k", tKey);
+    }
   }
 
-  /* Trick */
-  h += '<div class="tr">';
-  var myTrickCard = null, oppTrickCard = null;
-  if (trick.length >= 1) {
-    if (trick[0].player === mpPlayer) myTrickCard = trick[0];
-    else oppTrickCard = trick[0];
+  /* Buttons */
+  var btnEl = document.getElementById("mp-buttons");
+  if (btnEl) {
+    var bKey = (canDeclM?"M":"") + (can7?"7":"") + (canFuori?"F":"") + (mpData.winner?"W":"");
+    if (btnEl.getAttribute("data-k") !== bKey) {
+      var bh = "";
+      var mc2 = "bn bm" + (canDeclM ? " glow" : " off");
+      bh += '<div class="' + mc2 + '" data-action="mpDeclM">&#9812; MARIOTTO</div>';
+      var sc72 = "bn b7" + (can7 ? " glow7" : " off");
+      bh += '<div class="' + sc72 + '" data-action="mpSwap7">&#8644; CAMBIO 7</div>';
+      var fc2 = "bn bf" + (canFuori ? "" : " off");
+      bh += '<div class="' + fc2 + '" data-action="mpFuori">MI CHIAMO FUORI</div>';
+      bh += '<div class="bn bp" data-action="mpPrese">PRESE</div>';
+      bh += '<div class="bn bq" data-action="mpRules">?</div>';
+      btnEl.innerHTML = bh;
+      btnEl.setAttribute("data-k", bKey);
+    }
   }
-  if (trick.length >= 2) {
-    if (trick[1].player === mpPlayer) myTrickCard = trick[1];
-    else oppTrickCard = trick[1];
-  }
-  h += '<div class="ts' + (myTrickCard ? " has" : "") + '">';
-  if (myTrickCard) h += '<img src="' + cImg(myTrickCard) + '">';
-  h += '<div class="sl">Tu</div></div>';
-  h += '<div class="ts' + (oppTrickCard ? " has" : "") + '">';
-  if (oppTrickCard) h += '<img src="' + cImg(oppTrickCard) + '">';
-  h += '<div class="sl">' + oppNick + '</div></div>';
-  h += '</div></div>';
-
-  /* Action buttons — same style as single player */
-  h += '<div class="br">';
-  var mc2 = "bn bm" + (canDeclM ? " glow" : " off");
-  h += '<div class="' + mc2 + '" data-action="mpDeclM">&#9812; MARIOTTO</div>';
-  var sc72 = "bn b7" + (can7 ? " glow7" : " off");
-  h += '<div class="' + sc72 + '" data-action="mpSwap7">&#8644; CAMBIO 7</div>';
-  var fc2 = "bn bf" + (canFuori ? "" : " off");
-  h += '<div class="' + fc2 + '" data-action="mpFuori">MI CHIAMO FUORI</div>';
-  h += '<div class="bn bp" data-action="mpPrese">PRESE</div>';
-  h += '<div class="bn bq" data-action="mpRules">?</div>';
-  h += '</div>';
 
   /* My hand */
-  h += '<div class="hr">';
-  var mi2;
-  for (mi2 = 0; mi2 < myHandArr.length; mi2++) {
-    var canPlay = myTurn && !mpData.winner && trick.length < 2;
-    h += '<div class="hc' + (canPlay ? "" : " off") + '" data-action="mpPlay" data-i="' + mi2 + '"><img src="' + cImg(myHandArr[mi2]) + '"></div>';
+  var handEl = document.getElementById("mp-hand");
+  if (handEl) {
+    var hKey = "";
+    var mi2;
+    for (mi2 = 0; mi2 < myHandArr.length; mi2++) hKey += myHandArr[mi2].s + myHandArr[mi2].v + "_";
+    hKey += myTurn ? "T" : "F";
+    if (handEl.getAttribute("data-k") !== hKey) {
+      var hh = "";
+      for (mi2 = 0; mi2 < myHandArr.length; mi2++) {
+        var canPlay = myTurn && !mpData.winner && trick.length < 2;
+        hh += '<div class="hc' + (canPlay ? "" : " off") + '" data-action="mpPlay" data-i="' + mi2 + '"><img src="' + cImg(myHandArr[mi2]) + '"></div>';
+      }
+      handEl.innerHTML = hh;
+      handEl.setAttribute("data-k", hKey);
+    }
   }
-  h += '</div>';
-
-  el.innerHTML = h;
 
   if (mpData.winner && mpData.winner !== "shown") {
     showMPResult();
@@ -1720,18 +1801,88 @@ function showMPResult() {
       + '<p>' + fuoriMsg + '</p>'
       + '<p>' + fuoriResult + '</p>'
       + '<p>Tu: <strong>' + myTotal + '</strong> - Avversario: <strong>' + oppTotal + '</strong></p>'
-      + '<button class="cb" data-action="goHome">Torna al Menu</button>');
+      + '<div style="display:flex;gap:10px;justify-content:center;margin-top:12px">'
+      + '<button class="cb" data-action="mpRematch" style="background:#27AE60;color:#fff">Rifacciamo?</button>'
+      + '<button class="cb" data-action="goHome" style="background:#555;color:#ccc">No, esci</button>'
+      + '</div>');
   } else {
     result = myTotal > oppTotal ? "HAI VINTO!" : oppTotal > myTotal ? "HAI PERSO!" : "PAREGGIO!";
     rc = myTotal > oppTotal ? "color:#2ECC71" : oppTotal > myTotal ? "color:#E74C3C" : "color:#87CEEB";
     showO('<h2 style="' + rc + '">' + result + '</h2>'
       + '<p>Tu: <strong>' + myTotal + '</strong></p>'
       + '<p>Avversario: <strong>' + oppTotal + '</strong></p>'
-      + '<button class="cb" data-action="goHome">Torna al Menu</button>');
+      + '<div style="display:flex;gap:10px;justify-content:center;margin-top:12px">'
+      + '<button class="cb" data-action="mpRematch" style="background:#27AE60;color:#fff">Rifacciamo?</button>'
+      + '<button class="cb" data-action="goHome" style="background:#555;color:#ccc">No, esci</button>'
+      + '</div>');
   }
 }
 
-/* ===== MP ACTIONS ===== */
+
+function mpRequestRematch() {
+  if (!hasFB || !db || !currentRoomId) return;
+  hideO();
+  var myEmail = currentUser ? currentUser.email : "?";
+  var myNick2 = myNickname || getNick(myEmail);
+  db.collection("rooms").doc(currentRoomId).update({
+    rematchBy: currentUser.uid,
+    rematchByNick: myNick2,
+    rematchStatus: "pending"
+  });
+  showT("Aspettando risposta...");
+}
+
+function mpAcceptRematch() {
+  if (!hasFB || !db || !currentRoomId || !mpData) return;
+  hideO();
+  /* Create new room with same players */
+  var newDeck = shuf(mkDeck());
+  var newH1 = [], newH2 = [], di;
+  for (di = 0; di < 5; di++) { newH1.push(newDeck.pop()); newH2.push(newDeck.pop()); }
+  var newBri = newDeck.shift();
+  var p1 = mpData.player1;
+  var p2 = mpData.player2;
+  /* Swap who goes first (loser leads) */
+  var firstTurn = 1;
+  if (mpData.winner === p1.email) firstTurn = 2;
+  else if (mpData.winner === p2.email) firstTurn = 1;
+
+  db.collection("rooms").add({
+    player1: p1,
+    player2: p2,
+    deck: JSON.parse(JSON.stringify(newDeck)),
+    hand1: newH1,
+    hand2: newH2,
+    briscola: newBri,
+    briscolaSuit: newBri.s,
+    trick: [],
+    currentTurn: firstTurn,
+    phase: "play",
+    prese1: [], prese2: [],
+    points1: 0, points2: 0,
+    mariotto1: 0, mariotto2: 0,
+    declaredMariotto: {},
+    status: "playing",
+    rematch: true,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(docRef) {
+    /* Update old room so both players know where the new game is */
+    db.collection("rooms").doc(currentRoomId).update({
+      rematchStatus: "accepted",
+      rematchRoomId: docRef.id
+    });
+  });
+}
+
+function mpDeclineRematch() {
+  if (!hasFB || !db || !currentRoomId) return;
+  hideO();
+  db.collection("rooms").doc(currentRoomId).update({
+    rematchStatus: "declined"
+  });
+  mpLeaveGame();
+}
+
 function mpPlayCard(idx) {
   if (!hasFB || !db) return;
   if (!mpData || !currentRoomId) return;
@@ -2581,6 +2732,9 @@ var _e1286=document.getElementById("ovl");if(_e1286)_e1286.addEventListener("cli
       else if (a === "cf") doF();
       else if (a === "mpCF") mpDoFuori();
       else if (a === "goHome") { hideO(); showScreen("home"); loadStats(); setPresence(true, false); }
+      else if (a === "mpRematch") mpRequestRematch();
+      else if (a === "mpRemYes") mpAcceptRematch();
+      else if (a === "mpRemNo") mpDeclineRematch();
       return;
     }
     el = el.parentNode;
