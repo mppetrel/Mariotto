@@ -1046,6 +1046,8 @@ endG = function() {
   var pT = G.pPt + G.pM, cT = G.cPt + G.cM;
   var r = pT > cT ? "HAI VINTO!" : cT > pT ? "HAI PERSO!" : "PAREGGIO!";
   var rc = pT > cT ? "color:#2ECC71" : cT > pT ? "color:#E74C3C" : "color:#87CEEB";
+  if (pT > cT) playVictoryJingle();
+  else if (cT > pT) playDefeatJingle();
   showO('<h2 style="' + rc + '">' + r + '</h2>'
     + '<p>Tu: ' + G.pPt + (G.pM > 0 ? " + " + G.pM + " Mariotto" : "") + " = <strong>" + pT + "</strong></p>"
     + '<p>Computer: ' + G.cPt + (G.cM > 0 ? " + " + G.cM + " Mariotto" : "") + " = <strong>" + cT + "</strong></p>"
@@ -1258,7 +1260,9 @@ function startMultiplayerGame(roomId, playerNum) {
     /* Track last presa for animation */
     var oldTrick2 = mpData ? (mpData.trick || []) : [];
     var newTrick3 = newData.trick || [];
+    var trickJustResolved = false;
     if (oldTrick2.length === 2 && newTrick3.length === 0) {
+      trickJustResolved = true;
       mpLastPresa = {
         cards: oldTrick2.slice(),
         iWon: newData.currentTurn === mpPlayer,
@@ -1289,13 +1293,53 @@ function startMultiplayerGame(roomId, playerNum) {
     }
     if (cdm && !mpLastCanDeclM) showT("Puoi dichiarare MARIOTTO!");
     mpLastCanDeclM = cdm;
+    var renderDelay = trickJustResolved ? 1200 : 30;
     if (mpRafId) clearTimeout(mpRafId);
-    mpRafId = setTimeout(function() { mpRafId = 0; renderMP(); }, 30);
+    mpRafId = setTimeout(function() { mpRafId = 0; renderMP(); }, renderDelay);
   };
   mpUnsubscribe = function() { db.ref("rooms/" + roomId).off("value", roomCb); };
   db.ref("rooms/" + roomId).on("value", roomCb, function(err) {
     showT("Errore connessione: " + (err.message || "verifica le regole RTDB"));
   });
+}
+
+
+/* ===== JINGLES ===== */
+var audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  }
+  return audioCtx;
+}
+
+function playTone(freq, start, duration, type) {
+  var ctx = getAudioCtx();
+  if (!ctx) return;
+  var osc = ctx.createOscillator();
+  var gain = ctx.createGain();
+  osc.type = type || "sine";
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.3, ctx.currentTime + start);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + start + duration);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(ctx.currentTime + start);
+  osc.stop(ctx.currentTime + start + duration);
+}
+
+function playVictoryJingle() {
+  playTone(523, 0, 0.15, "square");
+  playTone(659, 0.15, 0.15, "square");
+  playTone(784, 0.3, 0.15, "square");
+  playTone(1047, 0.45, 0.4, "square");
+}
+
+function playDefeatJingle() {
+  playTone(400, 0, 0.25, "sawtooth");
+  playTone(350, 0.25, 0.25, "sawtooth");
+  playTone(300, 0.5, 0.25, "sawtooth");
+  playTone(200, 0.75, 0.5, "sawtooth");
 }
 
 function renderMP() {
@@ -1395,13 +1439,15 @@ function renderMP() {
   var deckCntEl = document.getElementById("mp-deck-count");
   if (deckCntEl) deckCntEl.innerHTML = dn > 0 ? "" + dn : "Vuoto";
 
-  /* Status message */
+  /* Status message with personal score */
   var statusEl = document.getElementById("mp-status");
   if (statusEl) {
     var statusMsg = "";
     if (mpData.winner) statusMsg = "Partita finita!";
     else if (myTurn) statusMsg = trick.length === 0 ? "Sei di mano. Gioca!" : "Rispondi alla carta!";
     else statusMsg = "Aspetta il turno...";
+    var myPts = mpPlayer === 1 ? ((mpData.points1 || 0) + (mpData.mariotto1 || 0)) : ((mpData.points2 || 0) + (mpData.mariotto2 || 0));
+    if (!mpData.winner) statusMsg += ' <span style="color:#ccc;font-size:10px">| Punti: ' + myPts + '</span>';
     statusEl.innerHTML = statusMsg;
   }
 
@@ -1462,7 +1508,7 @@ function renderMP() {
     lpEl = document.getElementById("mp-lastpresa");
   }
   if (lpEl && mpLastPresa && (Date.now() - mpLastPresa.ts) < 8000) {
-    var lpH = '<span class="lp-label">' + (mpLastPresa.iWon ? "Hai preso:" : "Presa avversario:") + '</span>';
+    var lpH = '<span class="lp-label">' + "Ultima presa:" + '</span>';
     var lpi;
     for (lpi = 0; lpi < mpLastPresa.cards.length; lpi++) {
       lpH += '<img src="' + cImg(mpLastPresa.cards[lpi]) + '">';
@@ -1528,6 +1574,8 @@ function showMPResult() {
     var iCalledFuori = mpData.fuoriBy === myEmail;
     result = iWonFuori ? "HAI VINTO!" : "HAI PERSO!";
     rc = iWonFuori ? "color:#2ECC71" : "color:#E74C3C";
+    if (iWonFuori) playVictoryJingle();
+    else playDefeatJingle();
     var fuoriName = mpData.fuoriBy ? getNick(mpData.fuoriBy) : "?";
     var fuoriPts = mpData.fuoriPts || 0;
     var fuoriMsg = iCalledFuori
@@ -1545,6 +1593,8 @@ function showMPResult() {
   } else {
     result = myTotal > oppTotal ? "HAI VINTO!" : oppTotal > myTotal ? "HAI PERSO!" : "PAREGGIO!";
     rc = myTotal > oppTotal ? "color:#2ECC71" : oppTotal > myTotal ? "color:#E74C3C" : "color:#87CEEB";
+    if (myTotal > oppTotal) playVictoryJingle();
+    else if (oppTotal > myTotal) playDefeatJingle();
     showO('<h2 style="' + rc + '">' + result + '</h2>'
       + '<p>Tu: <strong>' + myTotal + '</strong></p>'
       + '<p>Avversario: <strong>' + oppTotal + '</strong></p>'
