@@ -520,6 +520,31 @@ cursor:pointer;font-family:Georgia,serif;font-weight:bold}
 .ch-popup p{color:#ccc;font-size:12px;margin-bottom:10px}
 .ch-btns{display:flex;gap:8px;justify-content:center}
 
+
+/* ===== CARD ANIMATIONS ===== */
+@keyframes cardToTrick{
+  0%{transform:translateY(60px) scale(0.7);opacity:0.3}
+  100%{transform:translateY(0) scale(1);opacity:1}
+}
+@keyframes cardWon{
+  0%{transform:scale(1);opacity:1}
+  50%{transform:scale(0.9);opacity:0.8}
+  100%{transform:scale(0) translateY(-40px);opacity:0}
+}
+@keyframes cardLost{
+  0%{transform:scale(1);opacity:1}
+  50%{transform:scale(0.9);opacity:0.8}
+  100%{transform:scale(0) translateY(40px);opacity:0}
+}
+.ts.anim-in img{animation:cardToTrick 0.3s ease-out}
+.ts.anim-won img{animation:cardWon 0.5s ease-in forwards}
+.ts.anim-lost img{animation:cardLost 0.5s ease-in forwards}
+.last-presa{display:flex;align-items:center;justify-content:center;gap:4px;padding:2px 0;min-height:24px}
+.last-presa img{width:28px;height:45px;border-radius:2px;opacity:0.6;border:1px solid rgba(255,255,255,0.15)}
+.last-presa .lp-label{font-size:9px;color:#999}
+.trick-result{text-align:center;font-size:11px;font-weight:bold;padding:2px;min-height:16px}
+.trick-result.won{color:#2ECC71}
+.trick-result.lost{color:#E74C3C}
 /* ===== RESPONSIVE LAYOUT ===== */
 @media screen and (max-height: 600px) {
   #game,.mp-game{padding:2px 2px;gap:0}
@@ -541,6 +566,8 @@ cursor:pointer;font-family:Georgia,serif;font-weight:bold}
   .ma{font-size:10px;padding:1px 0}
   .sl{font-size:8px;bottom:-11px}
   .mlog-item{font-size:8px;padding:2px 5px}
+  .last-presa img{width:22px;height:36px}
+  .last-presa .lp-label{font-size:8px}
 }
 @media screen and (max-height: 700px) and (min-height: 601px) {
   .hc img{width:50px;height:82px}
@@ -567,6 +594,8 @@ cursor:pointer;font-family:Georgia,serif;font-weight:bold}
   .hr{padding:6px 0 10px;gap:4px}
   .ol{font-size:14px}
   .ma{font-size:13px}
+  .last-presa img{width:34px;height:55px}
+  .last-presa .lp-label{font-size:10px}
 }
 @media screen and (min-height: 900px) {
   .hc img{width:70px;height:114px}
@@ -1544,6 +1573,8 @@ var prevBriscola = null;
 var mpResultShown = false;
 var mpRematchState = "";
 var mpLastCanDeclM = false;
+var mpLastPresa = null;
+var mpPrevTrick = "";
 var mpRafId = 0;
 
 function startMultiplayerGame(roomId, playerNum) {
@@ -1624,6 +1655,29 @@ function startMultiplayerGame(roomId, playerNum) {
       setTimeout(function() { mpLeaveGame(); }, 1500);
       return;
     }
+    /* Track last presa for animation */
+    var oldTrick2 = mpData ? (mpData.trick || []) : [];
+    var newTrick3 = newData.trick || [];
+    if (oldTrick2.length === 2 && newTrick3.length === 0) {
+      var tWinner = newData.currentTurn;
+      var iWon2 = tWinner === mpPlayer;
+      mpLastPresa = {
+        cards: oldTrick2.slice(),
+        iWon: iWon2,
+        ts: Date.now()
+      };
+    }
+    /* Check Mariotto availability change */
+    var myH2 = mpPlayer === 1 ? newData.hand1 : newData.hand2;
+    var myTn2 = newData.currentTurn === mpPlayer;
+    var isLd2 = myTn2 && newTrick3.length === 0;
+    var cdm2 = false;
+    if (isLd2 && newData.phase === "play" && !newData.winner) {
+      var dms2 = newData.declaredMariotto || {};
+      if (mSu(myH2 || [], dms2).length > 0) cdm2 = true;
+    }
+    if (cdm2 && !mpLastCanDeclM) showT("Puoi dichiarare MARIOTTO!");
+    mpLastCanDeclM = cdm2;
     mpData = newData;
     /* Sync single-player globals for shared functions (beats, mBon) */
     if (newData.briscolaSuit) G.bS = newData.briscolaSuit;
@@ -1761,7 +1815,7 @@ function renderMP() {
     } else { mlogEl.innerHTML = ""; }
   }
 
-  /* Trick area */
+  /* Trick area with animation */
   var trickEl = document.getElementById("mp-trick");
   if (trickEl) {
     var myTrickCard = null, oppTrickCard = null;
@@ -1772,17 +1826,42 @@ function renderMP() {
       if (trick[1].player === mpPlayer) myTrickCard = trick[1]; else oppTrickCard = trick[1];
     }
     var tKey = (myTrickCard ? myTrickCard.s + myTrickCard.v : "x") + "_" + (oppTrickCard ? oppTrickCard.s + oppTrickCard.v : "x");
-    if (trickEl.getAttribute("data-k") !== tKey) {
+    var oldTKey = trickEl.getAttribute("data-k") || "";
+    if (oldTKey !== tKey) {
+      var myAnim = "", oppAnim = "";
+      if (myTrickCard && oldTKey.split("_")[0] === "x") myAnim = " anim-in";
+      if (oppTrickCard && oldTKey.split("_")[1] === "x") oppAnim = " anim-in";
       var th = "";
-      th += '<div class="ts' + (myTrickCard ? " has" : "") + '">';
+      th += '<div class="ts' + (myTrickCard ? " has" : "") + myAnim + '">';
       if (myTrickCard) th += '<img src="' + cImg(myTrickCard) + '">';
       th += '<div class="sl">Tu</div></div>';
-      th += '<div class="ts' + (oppTrickCard ? " has" : "") + '">';
+      th += '<div class="ts' + (oppTrickCard ? " has" : "") + oppAnim + '">';
       if (oppTrickCard) th += '<img src="' + cImg(oppTrickCard) + '">';
       th += '<div class="sl">' + oppNick + '</div></div>';
       trickEl.innerHTML = th;
       trickEl.setAttribute("data-k", tKey);
     }
+  }
+
+  /* Last presa display */
+  var lpEl = document.getElementById("mp-lastpresa");
+  if (!lpEl) {
+    var lpDiv = document.createElement("div");
+    lpDiv.id = "mp-lastpresa";
+    lpDiv.className = "last-presa";
+    var trickParent = document.getElementById("mp-trick");
+    if (trickParent && trickParent.parentNode) trickParent.parentNode.insertBefore(lpDiv, trickParent.nextSibling);
+    lpEl = document.getElementById("mp-lastpresa");
+  }
+  if (lpEl && mpLastPresa && (Date.now() - mpLastPresa.ts) < 8000) {
+    var lpH = '<span class="lp-label">' + (mpLastPresa.iWon ? "Hai preso:" : "Presa avversario:") + '</span>';
+    var lpi;
+    for (lpi = 0; lpi < mpLastPresa.cards.length; lpi++) {
+      lpH += '<img src="' + cImg(mpLastPresa.cards[lpi]) + '">';
+    }
+    lpEl.innerHTML = lpH;
+  } else if (lpEl) {
+    lpEl.innerHTML = "";
   }
 
   /* Buttons */
