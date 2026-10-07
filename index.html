@@ -1203,10 +1203,12 @@ function startMultiplayerGame(roomId, playerNum) {
     }
   }).catch(function() {});
   showScreen("mp");
+  showT("Connessione alla stanza...");
 
   var roomCb = function(snap) {
     if (!snap.exists()) { showT("Stanza eliminata."); showScreen("home"); return; }
     var newData = snap.val();
+    if (!mpData) showT("Dati ricevuti! Caricamento...");
     var newDM = newData.declaredMariotto || {};
     var oldDM = prevDeclaredM || {};
     var newKeys = Object.keys(newDM);
