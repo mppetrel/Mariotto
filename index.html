@@ -1125,7 +1125,9 @@ function createRoom() {
         startMultiplayerGame(roomId, 1);
       }
     };
-    db.ref("rooms/" + roomId).on("value", waitCb);
+    db.ref("rooms/" + roomId).on("value", waitCb, function(err) {
+    showT("Errore: " + (err.message || "verifica le regole RTDB"));
+  });
   }).catch(function(err) {
     showT("Errore: " + (err.message || "impossibile creare la stanza"));
   });
@@ -1163,6 +1165,20 @@ function joinRoom() {
     errEl.innerHTML = "Errore: " + (err.message || "");
   });
 }
+
+
+/* ===== MULTIPLAYER GLOBALS ===== */
+var mpPlayer = 0;
+var mpData = null;
+var myNickname = "";
+var nickCache = {};
+var prevDeclaredM = null;
+var prevBriscola = null;
+var mpResultShown = false;
+var mpRematchState = "";
+var mpLastCanDeclM = false;
+var mpLastPresa = null;
+var mpRafId = 0;
 
 function startMultiplayerGame(roomId, playerNum) {
   if (!hasFB || !db) return;
@@ -1275,7 +1291,9 @@ function startMultiplayerGame(roomId, playerNum) {
     mpRafId = setTimeout(function() { mpRafId = 0; renderMP(); }, 30);
   };
   mpUnsubscribe = function() { db.ref("rooms/" + roomId).off("value", roomCb); };
-  db.ref("rooms/" + roomId).on("value", roomCb);
+  db.ref("rooms/" + roomId).on("value", roomCb, function(err) {
+    showT("Errore connessione: " + (err.message || "verifica le regole RTDB"));
+  });
 }
 
 function renderMP() {
