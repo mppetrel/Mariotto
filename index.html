@@ -880,6 +880,7 @@ function toggleLoginMode() {
 }
 
 function doLogin() {
+  getAudioCtx();
   if (!hasFB) { currentUser={uid:"local",email:"Giocatore"}; myNickname="Giocatore"; showScreen("home"); document.getElementById("home-email").innerHTML="Modalita offline"; return; }
   var email = document.getElementById("inp-email").value.trim();
   var pass = document.getElementById("inp-pass").value;
@@ -1015,6 +1016,7 @@ function saveGameResult(p1Email, p2Email, score1, score2, mariotto1, mariotto2, 
 }
 
 function startVsCPU() {
+  getAudioCtx();
   setPresence(true, true);
   showScreen("game");
   newGame();
@@ -1309,6 +1311,9 @@ var audioCtx = null;
 function getAudioCtx() {
   if (!audioCtx) {
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  }
+  if (audioCtx && audioCtx.state === "suspended") {
+    audioCtx.resume().catch(function(){});
   }
   return audioCtx;
 }
@@ -1660,6 +1665,7 @@ function mpDeclineRematch() {
 }
 
 function mpPlayCard(idx) {
+  getAudioCtx();
   if (!hasFB || !db) return;
   if (!mpData || !currentRoomId) return;
   var myHand = mpPlayer === 1 ? mpData.hand1 : mpData.hand2;
