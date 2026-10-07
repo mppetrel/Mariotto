@@ -526,28 +526,15 @@ cursor:pointer;font-family:Georgia,serif;font-weight:bold}
   0%{transform:translateY(60px) scale(0.7);opacity:0.3}
   100%{transform:translateY(0) scale(1);opacity:1}
 }
-@keyframes cardWon{
-  0%{transform:scale(1);opacity:1}
-  50%{transform:scale(0.9);opacity:0.8}
-  100%{transform:scale(0) translateY(-40px);opacity:0}
-}
-@keyframes cardLost{
-  0%{transform:scale(1);opacity:1}
-  50%{transform:scale(0.9);opacity:0.8}
-  100%{transform:scale(0) translateY(40px);opacity:0}
-}
 .ts.anim-in img{animation:cardToTrick 0.3s ease-out}
-.ts.anim-won img{animation:cardWon 0.5s ease-in forwards}
-.ts.anim-lost img{animation:cardLost 0.5s ease-in forwards}
 .last-presa{display:flex;align-items:center;justify-content:center;gap:4px;padding:2px 0;min-height:24px}
 .last-presa img{width:28px;height:45px;border-radius:2px;opacity:0.6;border:1px solid rgba(255,255,255,0.15)}
 .last-presa .lp-label{font-size:9px;color:#999}
-.trick-result{text-align:center;font-size:11px;font-weight:bold;padding:2px;min-height:16px}
-.trick-result.won{color:#2ECC71}
-.trick-result.lost{color:#E74C3C}
 /* ===== RESPONSIVE LAYOUT ===== */
 @media screen and (max-height: 600px) {
   #game,.mp-game{padding:2px 2px;gap:0}
+  .last-presa img{width:22px;height:36px}
+  .last-presa .lp-label{font-size:8px}
   .or{padding:1px 0}
   .ol{font-size:11px}
   .mid{gap:1px}
@@ -566,8 +553,6 @@ cursor:pointer;font-family:Georgia,serif;font-weight:bold}
   .ma{font-size:10px;padding:1px 0}
   .sl{font-size:8px;bottom:-11px}
   .mlog-item{font-size:8px;padding:2px 5px}
-  .last-presa img{width:22px;height:36px}
-  .last-presa .lp-label{font-size:8px}
 }
 @media screen and (max-height: 700px) and (min-height: 601px) {
   .hc img{width:50px;height:82px}
@@ -594,8 +579,6 @@ cursor:pointer;font-family:Georgia,serif;font-weight:bold}
   .hr{padding:6px 0 10px;gap:4px}
   .ol{font-size:14px}
   .ma{font-size:13px}
-  .last-presa img{width:34px;height:55px}
-  .last-presa .lp-label{font-size:10px}
 }
 @media screen and (min-height: 900px) {
   .hc img{width:70px;height:114px}
@@ -780,10 +763,10 @@ cursor:pointer;font-family:Georgia,serif;font-weight:bold}
 <div id="ch-popup" class="ch-popup off"></div>
 
 <script>
-
 var firebaseConfig = {
   apiKey: "AIzaSyCh-I94qE6vtcaM55eJf2fTRm57uLGvMFk",
   authDomain: "mariotto-4abae.firebaseapp.com",
+  databaseURL: "https://mariotto-4abae-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "mariotto-4abae",
   storageBucket: "mariotto-4abae.firebasestorage.app",
   messagingSenderId: "119515485586",
@@ -798,7 +781,7 @@ function initFirebase() {
     if (typeof firebase !== "undefined") {
       firebase.initializeApp(firebaseConfig);
       auth = firebase.auth();
-      db = firebase.firestore();
+      db = firebase.database();
       auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(){});
       hasFB = true;
       auth.onAuthStateChanged(function(user) {
@@ -838,7 +821,7 @@ function loadFirebaseSDK() {
   var scripts = [
     "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js",
     "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js",
-    "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"
+    "https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"
   ];
   var loaded = 0;
   var failed = false;
@@ -860,6 +843,7 @@ function loadFirebaseSDK() {
 }
 
 loadFirebaseSDK();
+
 var CI={"bastoni_2":"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wAARCABhADwDASIAAhEBAxEB/8QAGwAAAQUBAQAAAAAAAAAAAAAAAwACBAUGBwH/xAA1EAABAwICBwYEBgMAAAAAAAABAAIDBBEFEgYTITEycbEzQVFykaEiU2GBFCRCUsHhFRZz/8QAGAEBAQEBAQAAAAAAAAAAAAAAAAECAwT/xAAgEQADAAEEAwEBAAAAAAAAAAAAAQIRAxIhQQQxUTJx/9oADAMBAAIRAxEAPwDcxxskja57Q4uFzdO1EPy2+i9g7CPyjonOc1jS5xAaNpJ7kAzUQ/Lb6JaiH5bfRBpsRo6uQx09TFI9u8NdtUpAD1EPy2+iWoh+W30TpHtiYXyODWtFy4mwCi0mJ0VbIY6apZI8C5AO1ASNRD8tvook9PK1/wCXmdEwi+UbrqwQJuMckA6DsI/KOip9Kc8tHHSMJBnLt30Fxf6XsrmDsI/KOiotJgXTUYDQ7ZKdpt+n35LGo8S2ipZZi6Sokp545oyQ+M5guowyCaFkrdz2hw+653jkAjrdczgmGa/ibbf4W8wkk4TSE79S3osaV753GcYbRRaaVhZFBSNOx/xv+oG736LM4UZXYpC6KTI6M58x7gNpVvpkScWYNuyEW9So2GQGnw6SpIIkk2N3HZuB27tptyKmrqbf70JWWb9jszWu8RdCm4xyRWgNaAO4WQpuMcl3KOg7CPyjoqPSwFsdBN+yoAPw5t4PcryDsI/KOiqtLINfgFRbeyzx9is0srBV7KKup2vw2SIxMM0JyMcRd5FrgD7em1avC7f4uktu1LOgWXZrJMOila3OamLUjP8ACAe77b9q1OGDLhlK3wiaPZeLw3xSf01a5M9pBTvqNI6YRgnLG1zsrrOAzHaECeQz1dJGGgtnqGNzZd4ZtJHP+FNxacU+PPku3MKUZQR33O5VeFS/i9J6WMAaumzZTlIJ2Hab991al35HK4RZ/JuUGbjHJGQZuMcl7jmPg7CPyjohYjFr8PqYv3xOb7IsHYR+UdEpGl0bmhxaSCA4bx9UBzjDaj8o+mfsbIQQ+/C5dAwy5wylLuLVNvzsua1LDR1VRT3zBr3Mv9QbXXSsNLjhtLnGV2qbcfZcYjbTf09GtUUpc++ynx6cUuJRyuuW6nMQO8tJt7uVNoi9kmkEskr/AI3MdlueIki/8qVppLKyqpwWjJqzlPfe+2/svdCKaJz6mZ0YMkeUNJ/TcG9lVCVuvpz3SowvZsEGbjHJGQZuMcl1OY+DsI/KOiIhwdhH5R0T0By/FATjNaPGd+zw2rpzG5WNb4ABc8xtg/2OpDBcGYbvE2XRVCIymnQGqoz35n9Ai6Dx2w+ol/fLb0H9rzTZhNNSvDSQ17gSO64/pH0LcDgzmg7WzOv7Kdjs0KBNxjkjoE3GOS0UfB2EflHRPQ6ZwdTxlpuMo6IqAqaDAqakqHVMhNRUucXax43E+AVqkkgBzwxVELopmNfG4WLTuKiYdhcOGySmmc8RyWJYTcA+IU9JAeoE3GOSOo07gHgE22IBmHdlL/1d1UxJJAJeJJID1JJJAeKHU9sUkkB//9k=",
 "bastoni_3":"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wAARCABhADwDASIAAhEBAxEB/8QAGwAAAQUBAQAAAAAAAAAAAAAABQACAwQGAQf/xAA2EAACAQMBBAgEBQQDAAAAAAABAgMABBEFEhMhMQYyM0FRcXKxU2GBkRQiI1KhJELB8GJz8f/EABkBAQADAQEAAAAAAAAAAAAAAAABAgMEBf/EACERAAMAAgICAgMAAAAAAAAAAAABAgMREkEhMQQiE1Fh/9oADAMBAAIRAxEAPwDcxxpJGrOoYsMnNO3EPw1+1dg7CP0j2pSyxwxmSV1RBzZjgCgObiH4a/aluIfhr9qUM0U8YkhkWRDyZTkUy4vba1Ki4njiLcg7AZoB+4h+Gv2pbiH4a/anqwZQQQQeII76ha8tkmEL3ESynkhcZP0oB+4h+Gv2qpcQSrJ/TzNEhGdkcs0QqvN1x5UBJB2EfpHtWY6bs4S0QEhCWOPE8MVp4Owj9I9qDdLLM3WkmRBl4Dt/Tv8A9+VQyH6A3RySWweGVmBgunCMAerxwMjxzj6GgusXL3OrXMjEk7wqPkAcAUXnYHRYpI5WYxRo35uByDy+eO6qn4FbjUtS6rHaIjB/c5yD9K44zfSnXTLVj8LQS0HVpYNBuI9sbccgSEtx2doZ/jBNZdnkaRmkLbZOWLc80ZsYhDDbiTOGupG6p47ChRnw4n71XuLQ3muGC3Vhv3BBbmQeJb3Nafkbrj/DOp+qN9pkrzaZayyZ23iUtnxxT5uuPKpIo1iiSNBhUUKPIVHN1x5V0lySDsI/SPanModSrDIIwR402DsI/SPan1AMhrSR21rJaygHdqqxk88ZOD9s/aobHjci444lhiYsH2QGGVOftzon0utopoLZnk3bbzG1/wAcZNBdNtIHSQbyFnVyMSqRlR35/wDa87NM4pqV2bzScpdke8KHSQhZA0csrYPJWY+PPgKP9GrBDLNqeG/WJEW3z2f3fX2oJdafZsZQsitJGA2YmwuxzIA8edbiEIsKCMAIFGyB3Durow1OR80Z16SJKgm648qsVXm648q6ihJB2EfpHtT6ZB2EfpHtT6AC9I7TfW8VxtELA35wO9DwP++GaBTC3gvG/DE7O7cZ3gClzwOMnuzR/pNdC30l0OC0xCAHv7z/ABWLiubeIul3C8vAbGw+yAPDyri+RG62v16NpilHPoO/goriztltrYpM7cAWwcf3cfCtVBEILeOIHIjUKD5VhNFv3k1mznlIyrbo4zxBGB/ivQKt8bHwl+fJGSWtb7Qqgm648qnqCbrjyrrMiSDsI/SPanMwVSxOABk02DsI/SPaq+p3yafYyXD/ANowo/c3cKAxuvaouqaighJaCJcIMdYnmfaqGt2J0+6ijfO20Ku/yPHIFX9D0m41KR7tJhC0T5V9jIL8+VLpbEW1xU3xkd0Xh+zPDH+frWevbNLzusSxpeEUbm1fSZ0Vyf1I0lRvnjP8Gt/pt9HqNmtxErqDwIcYOaznSDSLx7CG9uJVeWCMJIiDgBnmP4zRToxqKXmnJAT+tbqEYeI7jUytNkXmdqZfQbqCbrjyqeoJuuPKrlCSDsI/SPaqWpaRBqbIbh5cJyVWwPOrduQ1vGVORsj2qWhBWtLKKxsxb2oKKM4J4nJ76HL0btmvxeTzTTyhg/5yOJHLkKNUqDQ2SNZI2jcbSsCCD3ihVn0dsrG6W4tzMrryG3w8vnRelQaFUE3XHlViq1wwDjJxwoSM03spP+1verdKlQHa5SpUB2uUqVAKqdz2xpUqA//Z",
 "bastoni_4":"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wAARCABhADwDASIAAhEBAxEB/8QAGwAAAQUBAQAAAAAAAAAAAAAAAwACBAUGAQf/xAA1EAACAQMBBAgFAwQDAAAAAAABAgMABBEFBhIhMRMyNEFRcXKxIiNTYZEUM4EVUuHwc8Hx/8QAGAEBAQEBAQAAAAAAAAAAAAAAAAEDAgT/xAAeEQACAgMBAQEBAAAAAAAAAAAAAQIRAxIxIVETQf/aAAwDAQACEQMRAD8A3EcaSRq7qGLDJzT+gh+mv4pW/Z4vQPao93qdnZOI7m4WNyMgHwoCR0EP01/FLoIfpr+K7FLHNGJInV0biGU5Bp9AD6CH6a/il0EX01/FEqJe6ja6eqm6mWPe6o5k/wAUAfoIfpr+KjS20of5EzRIeO6OWaPbXMV1As0Dh425MKU3WHlQDoOzx+ge1Y7aa0nOpzSqrMCA2AOSgc/Lga2Nv2eP0j2qBq9qZFW5XO9EDnHPH2H+5rPJera6KT8ZmNktTa21H9G7fJnPwjwb/NbqvONThNrdx3iCNGEgJSPkpHEEfYgV6KjB0V15MMimOe0UxVeCd1jRnY4VRknwFeaXU9zq+ozThXkJPADjurnAFbnaOcwaJclT8Tr0Y82OKpdM079NiGJlMrNguB1uOSP4rLPl0Siusqht3hcbNWzWukokmN4uxODkc6sJusPKnQQpbwpFGDuoMDNNl6w8q3Xi9IPt/wBiP0j2p9Dt+zx+ge1EroGD2otRFqjpFhklAkKg43G7/wA/91q9B6T+j2xlkMhKZBPMDuH8CoO0mm3GoTWy2sS5AbfkYgYB5Crezg/S2cNvnPRoFz44FcJUzabjoq6UG2W/0dsOlIQsfl9xI45omyitPHLeT7xkPy1zyA58O7/yp2u6V/VbVVVt2WM5Qnl5Gj6NBLbaXbwTruyRrusAc99TVOWwc4/lquk6gzdYeVGoM3WHlWhiOt+zx+ke1Eodv2eL0D2olAV0+r29tqYsrgGNnUMjnqnPd9qsKwG0F0b3VJS+6RHmOMoOYBrd27q8EbIwZSoIYd/CuVK2bZMWkYv6QNY1qDSkHSK0kjAlUXvFWELF4Ud13WZQSM5xWP2vkVtUjVBvskW6VHcTk+1aPQbhrnR7aV5TI5XDE8855UT9oTxpY4y+ljQZusPKjUGbrDyroxHW/Z4/QPao2pXPQQbobdeT4Qf7fv8AxUm37PH6R7Vl9oNTFtqLose+yBQcn4cYJ9zWWVyUHr0qr+kNoLafU7OyRAG6YF48ckAzx8c1tlVVUKoAA4ADurF7G273Opy3spLdEm6GPeT/AIFbapihpFKw5bOzK7awhRaXSoN5XKsRzPePY0TRryK1BaEk2zsXY44Z+338fzVltDZG+0iaJBmRfjQeJH+msRY6hLaqYyDJCQfgJxgnvHga4zRlalHqIpV4+HpdBm6w8qjaNcpdabEyHeCfBnxxUmbrDyr0J+WB0HZ4/QPaqPVtnDqF+1wtwI1fG8CuTwGOFXdsQ1tEVORuD2otKsjVkXT7GDTrVbeBcKOJJ5sfE1KrtcqlFWf1HZaC6uGnglMBc5Zd3Iz4jwrQUqlEasiabZR6fZpbxksF5seZJ5miy9YeVGoEzAOATjhVKD079uX/AJW96mUqVAKuUqVAdpUqVAcqHc/vGlSoD//Z",
@@ -900,6 +884,7 @@ var CI={"bastoni_2":"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABAL
 "spade_cavallo":"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wAARCABhADwDASIAAhEBAxEB/8QAGwAAAgMBAQEAAAAAAAAAAAAAAAMEBQYCAQf/xAA8EAABAwIDBAYGCQQDAAAAAAABAgMEABEFEiEGQVFxEzEzNGFyMlJTgZGSFBUiIyShscHRFjVCgpPh8P/EABgBAAMBAQAAAAAAAAAAAAAAAAABAgQD/8QAIBEAAgIDAQACAwAAAAAAAAAAAAECEQMSITFBURMiI//aAAwDAQACEQMRAD8A3DIS60HFJBKtdRTOib9mn5a4id1a8tPoAX0Tfs0/CjoW/UT8orhmUy+p1DTgUppWVY3pNUUra+FHmLZS046hvRTiLWv4D96EmxGg6Fv1E/KKOhb9RPyivGHkSGEPNKzIWkKSeINMoGcdE37NPwqDJZUh37l1TSSLlKTYXqxqLK7QcqAGRO6teWnUmJ3Vry06gDN4tGcwjEBjEXMppSrSW/A76z0xmItuZ9FIUy2StlYJ3nl7quts8RKEJgJJCVJ6Rw8RfQfEVkHHJMZS46jlINlDQ25Gom3Jc+DprpFSfjPo+zzbbWCRW2nkPJSj00dRO+rBTiEKCVKAJBIudw66wezM6RFZkBtYDCRqTx4jxpSpLuJT7vSSlB0RqTod1vhUPMivwv1M+iXvUWT2g5V5hrrj0FtbxBWRY2FtRp1V7J7Qcq63atHKqYyJ3Vvy06kxO6teWqzEcd+izREZZ6VzLckqsE0nJJWwjFydINocKZxCKXVuJZdZSSlxXVbeD4Vh1Ya5JDZiIcJy/eFzRIPAeFWWJY9OlOvxXUtlpBuUpSRfhfXqpbGO/gF9G2tK8hSAbKF+fWKz5ZSr+dHeClJODVpCoaVKZYitjQ6ua8dSae7FcZkLcjraCWkZ7OG2/wBEcfClYS42VvqcUgjQJCqu8A6FWLuZk3ugZD1pzDU++uMe5KZ3k9cdodsvPceUpt0KJcSV+jYJtp/7lV3J7QcqehtDd8iEpubmwtc0iT2g5VujGlVmKUrdjIndW/LWSntljaOYF/5hK0k8D/3Wtid1b8tU21LQS3HljRaHOjJt1g7viBUZY7QaLwy1mmZ2AtlOPTOncbQhSLXWbC+lRcUbit4h+DdQpK2ypwJVcXpE9tD8wEXFzZw7r11BbWyt5vJmYcQUFak6IUR9m5tpWWGK57X8eGhZHildcHw2m04S28E2WBcncbHhU/D3VJxCCQs5vpGU66AE26vfUYMvyIjMOKjM4r7OQdYt160xOF4hBlNvyGi2jP0iCFXCV7grhTjF7bP7CbS/VfRv6iye0HKuoUpEyKh5GmYaj1TvFcye0HKty6YnwZE7q15aq9pY5ktwmQqwXJSPyOvuq0iG0Rsn1apMZxWIiVhykyW1oS/mXlUFZRa1z8aTVoE+lK9gclcaTJZYUGEuZmWz6RRc68eH51p8Ajx0YMyGbKS4nM4fWUeu/wCnup31vhtu/R/+QVTPYvEw3Fm1RpDbkWTcvIbVfIr1vC/7GhQrtFOV8HwojUfah5tCAlIbLiQOoZso/Y1eryhKs9sttb8KpfrHDxjweEtnKYxQVZxa+a9q4myWpk1AGKxm4eX7aUujMo0tWvEDab6Stn43QMSHEjK088pbSLeindUyV2g5U9tKUNpSgWSBYcqRK7QcqpCfWMh91b8tZXGNkXZE5T0BTSG3NVIWSLHw8K1MMgxkAbhY+Bp9NNrwlqzA/wBF4l7SP8x/igbFYn7WOP8AY/xW+oqt5C1Rgk7F4gAQXIxuLekdPyr0bF4h7aN8T/FbyikpsdFfgseZEgpjzVocU3olaCTdPjenSe0HKpVRJRAdF+FSxoUz/cJPmH6CpdFFIAFBoopgFFFFABXCetXOiikB/9k=",
 "spade_fante":"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wAARCABhADwDASIAAhEBAxEB/8QAGwAAAgMBAQEAAAAAAAAAAAAAAAQDBQYCAQf/xAA7EAABAwMBBAUICAcAAAAAAAABAAIDBAURIQYSMXITMzRBYRQiMlFScZKxFSNTgZGhwfAWJkJEYqLR/8QAGAEBAQEBAQAAAAAAAAAAAAAAAAEDAgT/xAAfEQADAAIDAQADAAAAAAAAAAAAAQIDERIhMQQTIoH/2gAMAwEAAhEDEQA/ANxA1skTZHNBLhnUKToo/s2/CuKTskXKFMgOOij+zb8KOhj9hvwhdqtqr7bqOrNNUVLWSAecCDhvvPcgH+hj9hvwhHQx+w34QuKephqGkwyB4bocdymUT2Djoo/s2/gkKqJ8cuIJXRNIyWt4ZVmk6vrRyqglpOyRcoXtVOympZZ5CA2NpcSV5Sdki5QqfbKcxWF7QQDI9rfeOP6IGWNqrm3GgjqW6bwwRjvHH81U7VQxRiCrFNTyzFxZ9Y3U6Z+/h+al2NDm2GMuzhz3Ead2VXbRXCJ13jgl3jDTgFxaAcPOvyws8muOjTFDutJBbamrgudPCYow+Z26/cYGAAa9x10z4rXd+F84rLh0NwhrKeR7jEd5rZBpn1DwV7abu6qvIMh6N8hLHRkaAAZAz+8rLC1MpGmbE5fmjVpSr60cqbSlX1o5V6TzktJ2WLlCoNuiRaYePXD5FX9J2SLlCrNqII57UTK0lrHh2QeCj6Q1voSsNWKTZqANOZHBzgMeiMnX98Vka5wkqpZMP3Zj0jHO/r7ifxBWutdkmljb5WXRU+B9SCQXad/eB4cVQbS18UtykgayJkVNiFjdwaYOvuH/ABeapp/tX8R6/mrhfRX0FBLdK5lLDuh5BfvHuA/YCes29JfmUksQjDXYkaG4c4g65J1XlmuMdLeKR0fRAOf0bg1uMg6cVd2prXbd3EloJa0kH1eiFpihVPaJ9d1+Ts1qUq+tHKm0pV9aOVbHlJaTskXKEVdOyrppIJM7kgwcHXCKTskXKFMgBfJbs4vulW48TM8/mV9aXzO92mrbc6t7I96N0x3Tnjk5xj71zTS9Jxb8KaMkPbu8QRj3rc2bP8b3LPHozn/VUVlsEs11p2zOYYfTdunOQNcfJX1mH873Q/4H5tXWNpptBy5emaxJ1fWjlTiTq+tHKhSWk7JFyhTKGk7JFyhSPe2Npc9wa0cSTgBAdLP1TXOu0Rbw8oyR4AZ/RXBrINdyRryBkhmuAqNtwpm3GV0jgNxkkg84EfiD6llkl1o0x1x2d2RpbWxA4OIDrjxaorRBK3bG6SOjeGFujiNNSMfJTWurpabzqiURF0bQzfGMtxxHrVs240Tnboq4d71b4VwJzGmTK1V7Q0lKvrRyptKVfWjlWhwS0nZIuUJe8W4XSgdSulMYc4HeAzwOVPRkGljA7hg+BU6bBkhsNEAR9ITAHiAwDK8GwdMP72X4Atchdc6JxRmn7IxyUcdLJXTOijcXMyxuW57h4KAbCUgcD5XOcHPotWsQnJrwaQAYGEpV9aOVOJKsIEoz7K5KRwduqeb9Am0IQAEFCFACEIVALlnF3vQhQH//2Q==",
 "spade_re":"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wAARCABhADwDASIAAhEBAxEB/8QAGwAAAgIDAQAAAAAAAAAAAAAAAAYDBQEEBwL/xAA4EAABAwIEAgcGBAcBAAAAAAABAAIDBBEFBiExEhM0QVFhcXKxFSIyUpHBFFOSsiMkQnODodHh/8QAGAEBAAMBAAAAAAAAAAAAAAAAAAECAwT/xAAgEQACAgICAgMAAAAAAAAAAAAAAQIDETESIQRBE0Kx/9oADAMBAAIRAxEAPwB4ga2SFr3NBLhckhScmP5G/pC80nRIvIPRey9ocASATsL7oDHKj/Lb9EcmP5G/pC9qkdmrCGSFjqhzSDY3YdO36WRLILjkx/I39IRyY/kb9Ao6Ssp62IS00rJWG2rTt49inQHjlR/lt+igkoWPeXMfJEDuGGw8VtLKAhpOiReQeiVMxTSNzbhoD3AAstY7XcbpqpOixeQeiUsx65yw0d8X7yrw2QxyXPcaoad9XXyMYwPhlc6T3nA2J7NutMWZse9lsFPTlv4l4vc/0Dt7ykwYk/l1T5uOWWewErrkAdf2XPZJrR01VNrL0P8AlyCODAaNscfL4ow4g7knclWqUsr4/NUTCiq3F/EP4UhGtx1FNo2WieezKyt1ywwWVhCkoRUvRYfIPRKOYNc7YZ4x/uKbaTokPkHokzHjUvzMypa1gfTkBjDe5tcg9+90UlHtjGTazCWsbVVsrI5IuIRtu0Enq9b9aUTXRGh5XLcX621Nh3b7WWxj2LuxHlxMHBTwgWb2utqSqW9t1nRHms3dPJbv6jHlkRzObDDFGKxh5jZHG23YujwSiWMO2PWOwrjdPPJDKyWFxY9hu1w3BXTcNqZ5KGmqnua108YJcB7pPeOorO6cq589w/Bvp7LxC1KOsbPeNz2mZnxALbWsZKccoq+iGk6JD5B6KtrcMdLicc4JMJa4yt4ra20HeD9lZUnRIfIPRSP+B3grOKewcbcwOc1pIALgCSp5YYmcMhcNXX1UUmjja19fVMmPTQDAKJ0IsZHNeLjWwBv/ALXP5M+NkUvZ0+PcoQawK9RwiX3Nj3LqeWwHZdogRcGIaJOzU2IUeGiKOziwuuBuLDRPOD0xpMJpYH/FHE0O8bLSixWVJmVsuU2yamo4KXi5EbWcRubdanQhaLozIqTokXkHopHDiaQOsKKk6JD5Aq3F8wUeH0j5GSxzSg8LY2PBN+/sCkHNamJ8FRJE8Wex5a4d4KusbgY3L+EuDi53DbU30IuqOeczzPmkN3vcXHxJurPGZj7LwqmddskcRLmnqB2K5boSlOLXoRfTL2agEuOYLRkl7Yo+Nwcb6DX7J0CW8MfGzFZKuseyL+XZHE5zgWkbu97a97aK6OJUA3raYf5W/wDVbxq5QrSeyZPLNpZUUM0U8YkhkbIw7OabhSroIIKTokPkCVKjIxmmkf8AjwA9xdbldp8U1UbgaWKx2aAe4qdTGTjoChSZJNLUMmbWRvLNQJILi/bbiXmfI8lTO+afE3SSPN3OMW5+qcUKecs5IwJ8eSZo4ZIY8Ve2KT42CPR3iLqI5AG4xDX+z/6nVCn5JDBX4Lh3srDmUnN5vCSeK1tzdWKwvLntabEgKmckmjT9NqfP9gttCFABBQhSAQhCAFry/GUIQH//2Q=="};
+
 var SU=["coppe","denari","spade","bastoni"];
 var VA=["asso","2","3","4","5","6","7","fante","cavallo","re"];
 var PT={asso:11,"2":0,"3":10,"4":0,"5":0,"6":0,"7":0,fante:2,cavallo:3,re:4};
@@ -909,23 +894,21 @@ var SN={coppe:"Coppe",denari:"Denari",spade:"Spade",bastoni:"Bastoni"};
 
 function loadNickname(uid, cb) {
   if (!hasFB || !db) { cb(""); return; }
-  db.collection("users").doc(uid).get().then(function(doc) {
-    if (doc.exists && doc.data().nickname) {
-      var n = doc.data().nickname;
+  db.ref("users/" + uid).once("value").then(function(snap) {
+    if (snap.exists() && snap.val().nickname) {
+      var n = snap.val().nickname;
       nickCache[uid] = n;
       cb(n);
-    } else {
-      cb("");
-    }
+    } else { cb(""); }
   }).catch(function() { cb(""); });
 }
 
 function resolveNick(email, uid, fallback) {
   if (uid && nickCache[uid]) return nickCache[uid];
   if (!uid || !hasFB || !db) return fallback || getNick(email);
-  db.collection("users").doc(uid).get().then(function(doc) {
-    if (doc.exists && doc.data().nickname) {
-      nickCache[uid] = doc.data().nickname;
+  db.ref("users/" + uid).once("value").then(function(snap) {
+    if (snap.exists() && snap.val().nickname) {
+      nickCache[uid] = snap.val().nickname;
     }
   }).catch(function() {});
   return fallback || getNick(email);
@@ -1253,10 +1236,10 @@ function doLogin() {
     auth.createUserWithEmailAndPassword(email, pass).then(function(cred) {
       var user = cred.user;
       return user.updateProfile({ displayName: nick }).then(function() {
-        return db.collection("users").doc(user.uid).set({
+        return db.ref("users/" + user.uid).set({
           email: email.toLowerCase(),
           nickname: nick,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          createdAt: firebase.database.ServerValue.TIMESTAMP
         });
       });
     }).then(function() {
@@ -1283,8 +1266,6 @@ function doLogin() {
   }
 }
 
-/* Firebase auth handled by initFirebase/startOffline */
-
 function doLogout() {
   cleanupListeners();
   cleanupFriends();
@@ -1305,110 +1286,74 @@ function cleanupListeners() {
 /* ===== STATS / HISTORY ===== */
 function loadStats() {
   if (!currentUser) return;
-  if (!hasFB || !db) { document.getElementById("stat-w").innerHTML="0"; document.getElementById("stat-l").innerHTML="0"; document.getElementById("stat-d").innerHTML="0"; return; }
-  var email = currentUser.email;
-  db.collection("games").where("player1", "==", email)
-    .limit(50).get()
-    .then(function(snap1) {
-      return db.collection("games").where("player2", "==", email)
-        .limit(50).get()
-        .then(function(snap2) {
-          var all = [];
-          snap1.forEach(function(d) { all.push(d.data()); });
-          snap2.forEach(function(d) { all.push(d.data()); });
-          all.sort(function(a, b) {
-            var da = a.date && a.date.toDate ? a.date.toDate().getTime() : 0;
-            var db2 = b.date && b.date.toDate ? b.date.toDate().getTime() : 0;
-            return db2 - da;
-          });
-          var wins = 0, losses = 0, draws = 0;
-          var i, g;
-          for (i = 0; i < all.length; i++) {
-            g = all[i];
-            if (g.winner === email) wins++;
-            else if (g.winner === "draw") draws++;
-            else losses++;
-          }
-          var total = all.length;
-          document.getElementById("home-stats").innerHTML =
-            "Partite: " + total + " | V: " + wins + " | S: " + losses + " | P: " + draws;
-        });
-    }).catch(function() {
-      document.getElementById("home-stats").innerHTML = "Statistiche non disponibili";
+  if (!hasFB || !db) { var hse = document.getElementById("home-stats"); if(hse) hse.innerHTML = "Statistiche offline"; return; }
+  db.ref("user_games/" + currentUser.uid).orderByChild("date").limitToLast(50).once("value").then(function(snap) {
+    var wins = 0, losses = 0, draws = 0, total = 0;
+    snap.forEach(function(child) {
+      var g = child.val();
+      total++;
+      if (g.winner === currentUser.email) wins++;
+      else if (g.winner === "draw") draws++;
+      else losses++;
     });
+    var hse = document.getElementById("home-stats");
+    if (hse) hse.innerHTML = "Partite: " + total + " | V: " + wins + " | S: " + losses + " | P: " + draws;
+  }).catch(function() {
+    var hse = document.getElementById("home-stats");
+    if (hse) hse.innerHTML = "Statistiche non disponibili";
+  });
 }
 
 function showHistory() {
   showScreen("stats");
   if (!currentUser) return;
   if (!hasFB || !db) { document.getElementById("stats-body").innerHTML = '<p style="color:#aaa;text-align:center">Storico disponibile online.</p>'; return; }
-  var email = currentUser.email;
   document.getElementById("stats-body").innerHTML = '<p style="color:#aaa;text-align:center">Caricamento...</p>';
 
-  db.collection("games").where("player1", "==", email)
-    .limit(30).get()
-    .then(function(snap1) {
-      return db.collection("games").where("player2", "==", email)
-        .limit(30).get()
-        .then(function(snap2) {
-          var all = [];
-          snap1.forEach(function(d) { all.push(d.data()); });
-          snap2.forEach(function(d) { all.push(d.data()); });
-          all.sort(function(a, b) {
-            var da = a.date && a.date.toDate ? a.date.toDate().getTime() : 0;
-            var db2 = b.date && b.date.toDate ? b.date.toDate().getTime() : 0;
-            return db2 - da;
-          });
-
-          if (all.length === 0) {
-            document.getElementById("stats-body").innerHTML =
-              '<p style="color:#aaa;text-align:center">Nessuna partita registrata.</p>';
-            return;
-          }
-          var h = '<table class="stbl"><tr><th>Data</th><th>Avversario</th><th>Risultato</th><th>Punteggio</th></tr>';
-          var i, g, dt, opp, res, sc;
-          for (i = 0; i < all.length; i++) {
-            g = all[i];
-            dt = g.date && g.date.toDate ? g.date.toDate().toLocaleDateString("it-IT") : "?";
-            opp = g.player1 === email ? g.player2 : g.player1;
-            if (g.winner === email) res = '<span style="color:#2ECC71">Vittoria</span>';
-            else if (g.winner === "draw") res = '<span style="color:#87CEEB">Pareggio</span>';
-            else res = '<span style="color:#E74C3C">Sconfitta</span>';
-            sc = (g.player1 === email ? g.score1 : g.score2) + " - " + (g.player1 === email ? g.score2 : g.score1);
-            h += "<tr><td>" + dt + "</td><td>" + opp + "</td><td>" + res + "</td><td>" + sc + "</td></tr>";
-          }
-          h += "</table>";
-          document.getElementById("stats-body").innerHTML = h;
-        });
-    }).catch(function() {
-      document.getElementById("stats-body").innerHTML = '<p style="color:#E74C3C;text-align:center">Errore nel caricamento.</p>';
-    });
+  db.ref("user_games/" + currentUser.uid).orderByChild("date").limitToLast(30).once("value").then(function(snap) {
+    var all = [];
+    snap.forEach(function(child) { all.push(child.val()); });
+    all.reverse();
+    if (all.length === 0) {
+      document.getElementById("stats-body").innerHTML = '<p style="color:#aaa;text-align:center">Nessuna partita registrata.</p>';
+      return;
+    }
+    var h = '<table class="stbl"><tr><th>Data</th><th>Avversario</th><th>Risultato</th><th>Punteggio</th></tr>';
+    var i, g, dt, opp, res, sc, email = currentUser.email;
+    for (i = 0; i < all.length; i++) {
+      g = all[i];
+      dt = g.date ? new Date(g.date).toLocaleDateString("it-IT") : "?";
+      opp = g.player1 === email ? g.player2 : g.player1;
+      if (g.winner === email) res = '<span style="color:#2ECC71">Vittoria</span>';
+      else if (g.winner === "draw") res = '<span style="color:#87CEEB">Pareggio</span>';
+      else res = '<span style="color:#E74C3C">Sconfitta</span>';
+      sc = (g.player1 === email ? g.score1 : g.score2) + " - " + (g.player1 === email ? g.score2 : g.score1);
+      h += "<tr><td>" + dt + "</td><td>" + getNick(opp) + "</td><td>" + res + "</td><td>" + sc + "</td></tr>";
+    }
+    h += "</table>";
+    document.getElementById("stats-body").innerHTML = h;
+  }).catch(function() {
+    document.getElementById("stats-body").innerHTML = '<p style="color:#E74C3C;text-align:center">Errore nel caricamento.</p>';
+  });
 }
 
-/* ===== SAVE GAME RESULT ===== */
 function saveGameResult(p1Email, p2Email, score1, score2, mariotto1, mariotto2, mode) {
-  if (!hasFB || !db) return;
+  if (!hasFB || !db || !currentUser) return;
   var winner;
   var t1 = score1 + mariotto1;
   var t2 = score2 + mariotto2;
   if (t1 > t2) winner = p1Email;
   else if (t2 > t1) winner = p2Email;
   else winner = "draw";
-
-  db.collection("games").add({
-    date: firebase.firestore.FieldValue.serverTimestamp(),
-    player1: p1Email,
-    player2: p2Email,
-    winner: winner,
-    score1: t1,
-    score2: t2,
-    mariotto1: mariotto1,
-    mariotto2: mariotto2,
-    mode: mode
-  }).catch(function(e) { console.log("Save error:", e); });
+  var gameData = {
+    date: firebase.database.ServerValue.TIMESTAMP,
+    player1: p1Email, player2: p2Email,
+    winner: winner, score1: t1, score2: t2,
+    mariotto1: mariotto1, mariotto2: mariotto2, mode: mode
+  };
+  db.ref("user_games/" + currentUser.uid).push(gameData).catch(function(){});
 }
 
-/* ===== SINGLE PLAYER (vs Computer) ===== */
 function startVsCPU() {
   setPresence(true, true);
   showScreen("game");
@@ -1484,98 +1429,80 @@ function genRoomCode() {
 
 function createRoom() {
   if (!currentUser) return;
-  if (!hasFB || !db) { showT("Multiplayer richiede connessione Firebase."); return; }
+  if (!hasFB || !db) { showT("Multiplayer richiede connessione."); return; }
   var code = genRoomCode();
   var deck = shuf(mkDeck());
-  var hand1 = [], hand2 = [];
-  var i;
+  var hand1 = [], hand2 = [], i;
   for (i = 0; i < 5; i++) { hand1.push(deck.pop()); hand2.push(deck.pop()); }
   var briCard = deck.shift();
-
+  var roomRef = db.ref("rooms").push();
+  var roomId = roomRef.key;
   var roomData = {
-    code: code,
-    createdBy: currentUser.uid,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    code: code, createdBy: currentUser.uid,
+    createdAt: firebase.database.ServerValue.TIMESTAMP,
     status: "waiting",
     player1: { uid: currentUser.uid, email: currentUser.email, nick: myNickname },
-    player2: null,
-    deck: JSON.parse(JSON.stringify(deck)),
-    briscola: JSON.parse(JSON.stringify(briCard)),
-    briscolaSuit: briCard.s,
-    hand1: JSON.parse(JSON.stringify(hand1)),
-    hand2: JSON.parse(JSON.stringify(hand2)),
-    trick: [],
-    currentTurn: 1,
-    phase: "play",
+    player2: false,
+    deck: deck, briscola: briCard, briscolaSuit: briCard.s,
+    hand1: hand1, hand2: hand2,
+    trick: [], currentTurn: 1, phase: "play",
     prese1: [], prese2: [],
     points1: 0, points2: 0,
     mariotto1: 0, mariotto2: 0,
     declaredMariotto: {},
-    winner: null,
-    finalScore: null
+    winner: false, finalScore: false
   };
-
-  db.collection("rooms").add(roomData).then(function(docRef) {
-    currentRoomId = docRef.id;
+  roomRef.set(roomData).then(function() {
+    currentRoomId = roomId;
     document.getElementById("wait-code").innerHTML = code;
     showScreen("wait");
-
-    waitUnsubscribe = db.collection("rooms").doc(docRef.id).onSnapshot(function(snap) {
-      var data = snap.data();
+    waitUnsubscribe = function() { db.ref("rooms/" + roomId).off("value", waitCb); };
+    var waitCb = function(snap) {
+      var data = snap.val();
       if (data && data.status === "playing" && data.player2) {
         if (waitUnsubscribe) { waitUnsubscribe(); waitUnsubscribe = null; }
         showT("Avversario trovato! Partita iniziata.");
-        startMultiplayerGame(docRef.id, 1);
+        startMultiplayerGame(roomId, 1);
       }
-    });
+    };
+    db.ref("rooms/" + roomId).on("value", waitCb);
   }).catch(function(err) {
     showT("Errore: " + (err.message || "impossibile creare la stanza"));
   });
 }
 
-/* ===== MULTIPLAYER — Join Room ===== */
 function joinRoom() {
-  if (!hasFB || !db) { showT("Multiplayer richiede connessione Firebase."); return; }
+  if (!hasFB || !db) { showT("Multiplayer richiede connessione."); return; }
   var code = document.getElementById("inp-code").value.trim().toUpperCase();
   var errEl = document.getElementById("join-err");
   errEl.innerHTML = "";
   if (!code || code.length < 5) { errEl.innerHTML = "Inserisci un codice valido."; return; }
-
-  db.collection("rooms").where("code", "==", code).where("status", "==", "waiting").limit(1).get()
-    .then(function(snap) {
-      if (snap.empty) { errEl.innerHTML = "Stanza non trovata o gia piena."; return; }
-      var doc = snap.docs[0];
-      var data = doc.data();
-      if (data.player1 && data.player1.uid === currentUser.uid) {
-        errEl.innerHTML = "Non puoi unirti alla tua stessa partita!";
-        return;
+  db.ref("rooms").orderByChild("code").equalTo(code).once("value").then(function(snap) {
+    var found = false;
+    snap.forEach(function(child) {
+      if (found) return;
+      var data = child.val();
+      if (data.status === "waiting") {
+        if (data.player1 && data.player1.uid === currentUser.uid) {
+          errEl.innerHTML = "Non puoi unirti alla tua stessa partita!";
+          found = true; return;
+        }
+        found = true;
+        db.ref("rooms/" + child.key).update({
+          player2: { uid: currentUser.uid, email: currentUser.email, nick: myNickname },
+          status: "playing"
+        }).then(function() {
+          currentRoomId = child.key;
+          showT("Unito alla partita!");
+          startMultiplayerGame(child.key, 2);
+        });
       }
-      return db.collection("rooms").doc(doc.id).update({
-        player2: { uid: currentUser.uid, email: currentUser.email, nick: myNickname },
-        status: "playing"
-      }).then(function() {
-        currentRoomId = doc.id;
-        showT("Unito alla partita!");
-        startMultiplayerGame(doc.id, 2);
-      });
-    }).catch(function(err) {
-      errEl.innerHTML = "Errore: " + (err.message || "");
     });
+    if (!found) errEl.innerHTML = "Stanza non trovata o gia piena.";
+  }).catch(function(err) {
+    errEl.innerHTML = "Errore: " + (err.message || "");
+  });
 }
-
-/* ===== MULTIPLAYER GAME ===== */
-var myNickname = '';
-var nickCache = {};
-var mpPlayer = 0; /* 1 or 2 */
-var mpData = null;
-var prevDeclaredM = null;
-var prevBriscola = null;
-var mpResultShown = false;
-var mpRematchState = "";
-var mpLastCanDeclM = false;
-var mpLastPresa = null;
-var mpPrevTrick = "";
-var mpRafId = 0;
 
 function startMultiplayerGame(roomId, playerNum) {
   if (!hasFB || !db) return;
@@ -1585,26 +1512,25 @@ function startMultiplayerGame(roomId, playerNum) {
   prevBriscola = null;
   mpResultShown = false;
   mpRematchState = "";
+  mpLastCanDeclM = false;
+  mpLastPresa = null;
   var mpEl = document.getElementById("mp-game"); if (mpEl) mpEl.removeAttribute("data-init");
-  /* Pause non-essential listeners during game */
   if (friendsUnsub) { friendsUnsub(); friendsUnsub = null; }
   if (presenceUnsub) { presenceUnsub(); presenceUnsub = null; }
   if (lobbyUnsub) { lobbyUnsub(); lobbyUnsub = null; }
   setPresence(true, true);
-  /* Pre-load room data for G.bS sync */
-  db.collection("rooms").doc(roomId).get().then(function(doc) {
-    if (doc.exists) {
-      var d = doc.data();
+  db.ref("rooms/" + roomId).once("value").then(function(snap) {
+    if (snap.exists()) {
+      var d = snap.val();
       if (d.briscolaSuit) G.bS = d.briscolaSuit;
       if (d.briscola) G.bri = d.briscola; else G.bri = null;
     }
   }).catch(function() {});
   showScreen("mp");
 
-  mpUnsubscribe = db.collection("rooms").doc(roomId).onSnapshot(function(snap) {
-    if (!snap.exists) { showT("Stanza eliminata."); showScreen("home"); return; }
-    var newData = snap.data();
-    /* Detect opponent Mariotto declaration */
+  var roomCb = function(snap) {
+    if (!snap.exists()) { showT("Stanza eliminata."); showScreen("home"); return; }
+    var newData = snap.val();
     var newDM = newData.declaredMariotto || {};
     var oldDM = prevDeclaredM || {};
     var newKeys = Object.keys(newDM);
@@ -1619,7 +1545,6 @@ function startMultiplayerGame(roomId, playerNum) {
       }
     }
     prevDeclaredM = JSON.parse(JSON.stringify(newDM));
-    /* Detect Cambio 7 */
     var newBri = newData.briscola;
     if (prevBriscola && newBri && newBri.v === "7" && prevBriscola.v !== "7") {
       if (newData.currentTurn !== mpPlayer) {
@@ -1628,7 +1553,6 @@ function startMultiplayerGame(roomId, playerNum) {
       }
     }
     prevBriscola = newBri ? JSON.parse(JSON.stringify(newBri)) : null;
-    /* Detect rematch */
     if (newData.rematchStatus === "pending" && newData.rematchBy !== currentUser.uid && mpRematchState !== "received") {
       mpRematchState = "received";
       var rmNick = newData.rematchByNick || "Avversario";
@@ -1641,13 +1565,11 @@ function startMultiplayerGame(roomId, playerNum) {
     }
     if (newData.rematchStatus === "accepted" && newData.rematchRoomId && mpRematchState !== "joining") {
       mpRematchState = "joining";
-      var newRoomId = newData.rematchRoomId;
-      /* Clean up current listener */
+      var newRoomId2 = newData.rematchRoomId;
       if (mpUnsubscribe) { mpUnsubscribe(); mpUnsubscribe = null; }
       hideO();
-      /* Join the new room - figure out which player I am */
       var myP = (newData.player1 && newData.player1.uid === currentUser.uid) ? 1 : 2;
-      startMultiplayerGame(newRoomId, myP);
+      startMultiplayerGame(newRoomId2, myP);
       return;
     }
     if (newData.rematchStatus === "declined" && newData.rematchBy === currentUser.uid) {
@@ -1659,15 +1581,13 @@ function startMultiplayerGame(roomId, playerNum) {
     var oldTrick2 = mpData ? (mpData.trick || []) : [];
     var newTrick3 = newData.trick || [];
     if (oldTrick2.length === 2 && newTrick3.length === 0) {
-      var tWinner = newData.currentTurn;
-      var iWon2 = tWinner === mpPlayer;
       mpLastPresa = {
         cards: oldTrick2.slice(),
-        iWon: iWon2,
+        iWon: newData.currentTurn === mpPlayer,
         ts: Date.now()
       };
     }
-    /* Check Mariotto availability change */
+    /* Check Mariotto availability */
     var myH2 = mpPlayer === 1 ? newData.hand1 : newData.hand2;
     var myTn2 = newData.currentTurn === mpPlayer;
     var isLd2 = myTn2 && newTrick3.length === 0;
@@ -1679,13 +1599,23 @@ function startMultiplayerGame(roomId, playerNum) {
     if (cdm2 && !mpLastCanDeclM) showT("Puoi dichiarare MARIOTTO!");
     mpLastCanDeclM = cdm2;
     mpData = newData;
-    /* Sync single-player globals for shared functions (beats, mBon) */
     if (newData.briscolaSuit) G.bS = newData.briscolaSuit;
-    if (newData.briscola) G.bri = newData.briscola;
-    else G.bri = null;
+    if (newData.briscola) G.bri = newData.briscola; else G.bri = null;
+    var myH = mpPlayer === 1 ? newData.hand1 : newData.hand2;
+    var myTn = newData.currentTurn === mpPlayer;
+    var isLd = myTn && (newData.trick || []).length === 0;
+    var cdm = false;
+    if (isLd && newData.phase === "play" && !newData.winner) {
+      var dms = newData.declaredMariotto || {};
+      if (mSu(myH || [], dms).length > 0) cdm = true;
+    }
+    if (cdm && !mpLastCanDeclM) showT("Puoi dichiarare MARIOTTO!");
+    mpLastCanDeclM = cdm;
     if (mpRafId) clearTimeout(mpRafId);
-    mpRafId = setTimeout(function() { mpRafId = 0; renderMP(); }, 50);
-  });
+    mpRafId = setTimeout(function() { mpRafId = 0; renderMP(); }, 30);
+  };
+  mpUnsubscribe = function() { db.ref("rooms/" + roomId).off("value", roomCb); };
+  db.ref("rooms/" + roomId).on("value", roomCb);
 }
 
 function renderMP() {
@@ -1815,7 +1745,7 @@ function renderMP() {
     } else { mlogEl.innerHTML = ""; }
   }
 
-  /* Trick area with animation */
+  /* Trick area */
   var trickEl = document.getElementById("mp-trick");
   if (trickEl) {
     var myTrickCard = null, oppTrickCard = null;
@@ -1842,8 +1772,6 @@ function renderMP() {
       trickEl.setAttribute("data-k", tKey);
     }
   }
-
-  /* Last presa display */
   var lpEl = document.getElementById("mp-lastpresa");
   if (!lpEl) {
     var lpDiv = document.createElement("div");
@@ -1953,9 +1881,8 @@ function mpRequestRematch() {
   if (mpRematchState) return;
   mpRematchState = "sent";
   hideO();
-  var myEmail = currentUser ? currentUser.email : "?";
-  var myNick2 = myNickname || getNick(myEmail);
-  db.collection("rooms").doc(currentRoomId).update({
+  var myNick2 = myNickname || getNick(currentUser ? currentUser.email : "?");
+  db.ref("rooms/" + currentRoomId).update({
     rematchBy: currentUser.uid,
     rematchByNick: myNick2,
     rematchStatus: "pending"
@@ -1967,41 +1894,30 @@ function mpAcceptRematch() {
   if (!hasFB || !db || !currentRoomId || !mpData) return;
   hideO();
   showT("Preparando rivincita...");
-  /* Create new room with same players */
   var newDeck = shuf(mkDeck());
   var newH1 = [], newH2 = [], di;
   for (di = 0; di < 5; di++) { newH1.push(newDeck.pop()); newH2.push(newDeck.pop()); }
   var newBri = newDeck.shift();
   var p1 = mpData.player1;
   var p2 = mpData.player2;
-  /* Swap who goes first (loser leads) */
   var firstTurn = 1;
   if (mpData.winner === p1.email) firstTurn = 2;
   else if (mpData.winner === p2.email) firstTurn = 1;
-
-  db.collection("rooms").add({
-    player1: p1,
-    player2: p2,
-    deck: JSON.parse(JSON.stringify(newDeck)),
-    hand1: newH1,
-    hand2: newH2,
-    briscola: newBri,
-    briscolaSuit: newBri.s,
-    trick: [],
-    currentTurn: firstTurn,
-    phase: "play",
-    prese1: [], prese2: [],
-    points1: 0, points2: 0,
-    mariotto1: 0, mariotto2: 0,
-    declaredMariotto: {},
-    status: "playing",
-    rematch: true,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(function(docRef) {
-    /* Update old room so both players know where the new game is */
-    db.collection("rooms").doc(currentRoomId).update({
+  var newRef = db.ref("rooms").push();
+  var newRoomId = newRef.key;
+  newRef.set({
+    player1: p1, player2: p2,
+    deck: newDeck, hand1: newH1, hand2: newH2,
+    briscola: newBri, briscolaSuit: newBri.s,
+    trick: [], currentTurn: firstTurn, phase: "play",
+    prese1: [], prese2: [], points1: 0, points2: 0,
+    mariotto1: 0, mariotto2: 0, declaredMariotto: {},
+    status: "playing", rematch: true,
+    createdAt: firebase.database.ServerValue.TIMESTAMP
+  }).then(function() {
+    db.ref("rooms/" + currentRoomId).update({
       rematchStatus: "accepted",
-      rematchRoomId: docRef.id
+      rematchRoomId: newRoomId
     });
   });
 }
@@ -2009,9 +1925,7 @@ function mpAcceptRematch() {
 function mpDeclineRematch() {
   if (!hasFB || !db || !currentRoomId) return;
   hideO();
-  db.collection("rooms").doc(currentRoomId).update({
-    rematchStatus: "declined"
-  });
+  db.ref("rooms/" + currentRoomId).update({ rematchStatus: "declined" });
   mpLeaveGame();
 }
 
@@ -2022,160 +1936,105 @@ function mpPlayCard(idx) {
   if (!myHand || idx >= myHand.length) return;
   if (mpData.currentTurn !== mpPlayer) return;
   if ((mpData.trick || []).length >= 2) return;
-
   var card = myHand[idx];
   var newHand = myHand.slice();
   newHand.splice(idx, 1);
-
   var newTrick = (mpData.trick || []).slice();
   newTrick.push({ s: card.s, v: card.v, player: mpPlayer });
-
-  /* Optimistic local update - render immediately */
   if (mpPlayer === 1) mpData.hand1 = newHand;
   else mpData.hand2 = newHand;
   mpData.trick = newTrick;
   if (newTrick.length === 1) mpData.currentTurn = mpPlayer === 1 ? 2 : 1;
   renderMP();
-
   var update = {};
   if (mpPlayer === 1) update.hand1 = newHand;
   else update.hand2 = newHand;
   update.trick = newTrick;
-
   if (newTrick.length === 1) {
-    /* Switch turn */
     update.currentTurn = mpPlayer === 1 ? 2 : 1;
-    db.collection("rooms").doc(currentRoomId).update(update);
+    db.ref("rooms/" + currentRoomId).update(update);
   } else if (newTrick.length === 2) {
-    /* Resolve trick */
     var leadCard = newTrick[0];
     var followCard = newTrick[1];
-    var leadPlayer = leadCard.player;
     var followWins = beats(followCard, leadCard);
     var trickWinner = followWins ? followCard.player : leadCard.player;
     var tp = gp(leadCard) + gp(followCard);
-
     var newPrese1 = (mpData.prese1 || []).slice();
     var newPrese2 = (mpData.prese2 || []).slice();
     var newPts1 = mpData.points1;
     var newPts2 = mpData.points2;
-    if (trickWinner === 1) {
-      newPrese1.push(leadCard); newPrese1.push(followCard);
-      newPts1 += tp;
-    } else {
-      newPrese2.push(leadCard); newPrese2.push(followCard);
-      newPts2 += tp;
-    }
-
-    /* Draw cards */
+    if (trickWinner === 1) { newPrese1.push(leadCard); newPrese1.push(followCard); newPts1 += tp; }
+    else { newPrese2.push(leadCard); newPrese2.push(followCard); newPts2 += tp; }
     var newDeck = (mpData.deck || []).slice();
-    var newBri = mpData.briscola ? JSON.parse(JSON.stringify(mpData.briscola)) : null;
+    var newBriC = mpData.briscola ? JSON.parse(JSON.stringify(mpData.briscola)) : null;
     var newH1 = mpPlayer === 1 ? newHand : (mpData.hand1 || []).slice();
     var newH2 = mpPlayer === 2 ? newHand : (mpData.hand2 || []).slice();
-
-    function drawFor(pNum) {
-      if (newDeck.length > 0) {
-        if (pNum === 1) newH1.push(newDeck.pop());
-        else newH2.push(newDeck.pop());
-      } else if (newBri) {
-        if (pNum === 1) newH1.push(newBri);
-        else newH2.push(newBri);
-        newBri = null;
-      }
+    var fd = trickWinner, sd = trickWinner === 1 ? 2 : 1;
+    function drawFor(pN) {
+      if (newDeck.length > 0) { if (pN === 1) newH1.push(newDeck.pop()); else newH2.push(newDeck.pop()); }
+      else if (newBriC) { if (pN === 1) newH1.push(newBriC); else newH2.push(newBriC); newBriC = null; }
     }
-    var firstDraw = trickWinner;
-    var secondDraw = trickWinner === 1 ? 2 : 1;
-    drawFor(firstDraw);
-    drawFor(secondDraw);
-
-    update.hand1 = newH1;
-    update.hand2 = newH2;
-    update.deck = newDeck;
-    update.briscola = newBri;
-    update.prese1 = newPrese1;
-    update.prese2 = newPrese2;
-    update.points1 = newPts1;
-    update.points2 = newPts2;
+    drawFor(fd); drawFor(sd);
+    update.hand1 = newH1; update.hand2 = newH2;
+    update.deck = newDeck.length > 0 ? newDeck : [];
+    update.briscola = newBriC || false;
+    update.prese1 = newPrese1; update.prese2 = newPrese2;
+    update.points1 = newPts1; update.points2 = newPts2;
     update.currentTurn = trickWinner;
     update.trick = [];
-
-    /* Check if game is over */
     if (newH1.length === 0 && newH2.length === 0) {
-      var total1 = newPts1 + mpData.mariotto1;
-      var total2 = newPts2 + mpData.mariotto2;
+      var total1 = newPts1 + (mpData.mariotto1 || 0);
+      var total2 = newPts2 + (mpData.mariotto2 || 0);
       if (total1 > total2) update.winner = mpData.player1.email;
       else if (total2 > total1) update.winner = mpData.player2.email;
       else update.winner = "draw";
       update.status = "finished";
       update.finalScore = { p1: total1, p2: total2 };
-
-      /* Save game history */
       if (currentUser) {
-        saveGameResult(
-          mpData.player1.email, mpData.player2.email,
-          newPts1, newPts2, mpData.mariotto1, mpData.mariotto2, "online"
-        );
+        saveGameResult(mpData.player1.email, mpData.player2.email, newPts1, newPts2, mpData.mariotto1 || 0, mpData.mariotto2 || 0, "online");
       }
     }
-
-    db.collection("rooms").doc(currentRoomId).update(update);
+    db.ref("rooms/" + currentRoomId).update(update);
   }
 }
 
 function mpDeclareM() {
-  if (!hasFB || !db) return;
-  if (!mpData || !currentRoomId) return;
+  if (!hasFB || !db || !mpData || !currentRoomId) return;
   if (mpData.currentTurn !== mpPlayer) return;
   if ((mpData.trick || []).length !== 0) return;
-
   var myHand = mpPlayer === 1 ? mpData.hand1 : mpData.hand2;
   var dm = mpData.declaredMariotto || {};
   var ms = mSu(myHand, dm);
   if (ms.length === 0) return;
-
   var bonus = 0;
   var newDM = JSON.parse(JSON.stringify(dm));
   var i;
-  for (i = 0; i < ms.length; i++) {
-    var b = mBon(ms[i]);
-    bonus += b;
-    newDM[ms[i]] = mpPlayer;
-  }
-
+  for (i = 0; i < ms.length; i++) { var b = mBon(ms[i]); bonus += b; newDM[ms[i]] = mpPlayer; }
   var update = { declaredMariotto: newDM };
   if (mpPlayer === 1) update.mariotto1 = (mpData.mariotto1 || 0) + bonus;
   else update.mariotto2 = (mpData.mariotto2 || 0) + bonus;
-
-  db.collection("rooms").doc(currentRoomId).update(update);
+  db.ref("rooms/" + currentRoomId).update(update);
   showT("MARIOTTO dichiarato! +" + bonus);
 }
 
 function mpSwap7() {
-  if (!hasFB || !db) return;
-  if (!mpData || !currentRoomId) return;
+  if (!hasFB || !db || !mpData || !currentRoomId) return;
   if (mpData.currentTurn !== mpPlayer) return;
   if ((mpData.trick || []).length !== 0) return;
   if (!mpData.briscola) return;
   if (RK[mpData.briscola.v] <= RK["7"]) return;
-
   var myHand = mpPlayer === 1 ? mpData.hand1 : mpData.hand2;
-  var idx = -1;
-  var i;
+  var idx = -1, i;
   for (i = 0; i < myHand.length; i++) {
     if (myHand[i].s === mpData.briscolaSuit && myHand[i].v === "7") { idx = i; break; }
   }
   if (idx < 0) return;
-
   var newHand = myHand.slice();
-  var oldBri = mpData.briscola;
-  newHand[idx] = JSON.parse(JSON.stringify(oldBri));
-
-  var update = { briscola: { s: myHand[idx].s, v: myHand[idx].v } };
+  newHand[idx] = JSON.parse(JSON.stringify(mpData.briscola));
+  var update = { briscola: { s: myHand[idx].s, v: myHand[idx].v }, lastSwap7: mpPlayer };
   if (mpPlayer === 1) update.hand1 = newHand;
   else update.hand2 = newHand;
-
-  update.lastSwap7 = mpPlayer;
-  db.collection("rooms").doc(currentRoomId).update(update);
+  db.ref("rooms/" + currentRoomId).update(update);
   showT("Cambio col 7 effettuato!");
 }
 
@@ -2190,30 +2049,20 @@ function mpAskFuori() {
 }
 
 function mpDoFuori() {
-  if (!hasFB || !db) return;
-  if (!mpData || !currentRoomId) return;
+  if (!hasFB || !db || !mpData || !currentRoomId) return;
   hideO();
-  var myPts = mpPlayer === 1 ? (mpData.points1 + mpData.mariotto1) : (mpData.points2 + mpData.mariotto2);
+  var myPts = mpPlayer === 1 ? (mpData.points1 + (mpData.mariotto1||0)) : (mpData.points2 + (mpData.mariotto2||0));
   var win = myPts >= 61;
   var myEmail = currentUser ? currentUser.email : "?";
-  var oppEmail = mpPlayer === 1
-    ? (mpData.player2 ? mpData.player2.email : "?")
-    : (mpData.player1 ? mpData.player1.email : "?");
-  var oppNick = getPlayerNick(mpPlayer === 1 ? mpData.player2 : mpData.player1);
+  var oppEmail = mpPlayer === 1 ? (mpData.player2 ? mpData.player2.email : "?") : (mpData.player1 ? mpData.player1.email : "?");
   var update = {
-    status: "finished",
-    winner: win ? myEmail : oppEmail,
-    calledFuori: true,
-    fuoriBy: myEmail,
-    fuoriPts: myPts,
-    finalScore: { p1: mpData.points1 + mpData.mariotto1, p2: mpData.points2 + mpData.mariotto2 }
+    status: "finished", winner: win ? myEmail : oppEmail,
+    calledFuori: true, fuoriBy: myEmail, fuoriPts: myPts,
+    finalScore: { p1: mpData.points1 + (mpData.mariotto1||0), p2: mpData.points2 + (mpData.mariotto2||0) }
   };
-  db.collection("rooms").doc(currentRoomId).update(update);
+  db.ref("rooms/" + currentRoomId).update(update);
   if (currentUser) {
-    saveGameResult(
-      mpData.player1.email, mpData.player2.email,
-      mpData.points1, mpData.points2, mpData.mariotto1, mpData.mariotto2, "online"
-    );
+    saveGameResult(mpData.player1.email, mpData.player2.email, mpData.points1, mpData.points2, mpData.mariotto1||0, mpData.mariotto2||0, "online");
   }
 }
 
@@ -2245,119 +2094,103 @@ var pendingChallengeId = null;
 function enterLobby() {
   if (!hasFB || !db || !currentUser) { showT("Richiede connessione."); return; }
   showScreen("lobby");
-  var myRef = db.collection("lobby").doc(currentUser.uid);
-  myRef.set({
-    uid: currentUser.uid,
-    email: currentUser.email,
-    ts: firebase.firestore.FieldValue.serverTimestamp(),
-    status: "waiting"
+  db.ref("lobby/" + currentUser.uid).set({
+    uid: currentUser.uid, email: currentUser.email, nick: myNickname,
+    ts: firebase.database.ServerValue.TIMESTAMP, status: "waiting"
   });
-  lobbyUnsub = db.collection("lobby").where("status", "==", "waiting").onSnapshot(function(snap) {
+  var lobbyCb = function(snap) {
     var el = document.getElementById("lobby-list");
     if (!el) return;
     var players = [];
-    snap.forEach(function(doc) {
-      var d = doc.data();
-      if (d.uid !== currentUser.uid) players.push(d);
+    snap.forEach(function(child) {
+      var d = child.val();
+      if (d && d.uid !== currentUser.uid && d.status === "waiting") players.push(d);
     });
     if (players.length === 0) {
       el.innerHTML = '<div class="lob-empty">Nessun giocatore in attesa.<br>Aspetta o invita un amico!</div>';
     } else {
-      var h = "";
-      var pi;
+      var h = "", pi;
       for (pi = 0; pi < players.length; pi++) {
         h += '<div class="lob-item"><span class="lob-name">' + (players[pi].nick || getNick(players[pi].email)) + '</span>';
         h += '<button class="lob-btn" data-action="challenge" data-uid="' + players[pi].uid + '" data-email="' + players[pi].email + '">Sfida!</button></div>';
       }
       el.innerHTML = h;
     }
-  });
-  challengeUnsub = db.collection("challenges").where("toUid", "==", currentUser.uid).where("status", "==", "pending").onSnapshot(function(snap) {
-    snap.forEach(function(doc) {
-      var ch = doc.data();
-      pendingChallengeId = doc.id;
-      var cel = document.getElementById("challenge-msg");
-      if (cel) cel.innerHTML = getNick(ch.fromEmail) + " ti sfida a Mariotto!";
-      showScreen("challenge");
-    });
-  });
+  };
+  lobbyUnsub = function() { db.ref("lobby").off("value", lobbyCb); };
+  db.ref("lobby").on("value", lobbyCb);
 }
 
 function leaveLobby() {
   if (lobbyUnsub) { lobbyUnsub(); lobbyUnsub = null; }
   if (challengeUnsub) { challengeUnsub(); challengeUnsub = null; }
   if (hasFB && db && currentUser) {
-    db.collection("lobby").doc(currentUser.uid).delete().catch(function() {});
+    db.ref("lobby/" + currentUser.uid).remove().catch(function(){});
   }
 }
 
 function sendChallenge(toUid, toEmail) {
   if (!hasFB || !db || !currentUser) return;
-  db.collection("challenges").add({
-    fromUid: currentUser.uid,
-    fromEmail: currentUser.email,
-    toUid: toUid,
-    toEmail: toEmail,
-    status: "pending",
-    ts: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(function(ref) {
-    pendingChallengeId = ref.id;
+  var chRef = db.ref("user_challenges/" + toUid).push();
+  var chId = chRef.key;
+  chRef.set({
+    fromUid: currentUser.uid, fromEmail: currentUser.email,
+    toUid: toUid, toEmail: toEmail,
+    status: "pending", ts: firebase.database.ServerValue.TIMESTAMP
+  }).then(function() {
+    pendingChallengeId = chId;
     showT("Sfida inviata a " + getNick(toEmail) + "!");
-    var chUnsub = db.collection("challenges").doc(ref.id).onSnapshot(function(snap) {
-      if (!snap.exists) return;
-      var d = snap.data();
+    var chCb = function(snap) {
+      if (!snap.exists()) return;
+      var d = snap.val();
       if (d.status === "accepted" && d.roomId) {
-        chUnsub();
+        db.ref("user_challenges/" + toUid + "/" + chId).off("value", chCb);
         leaveLobby();
         startMultiplayerGame(d.roomId, 1);
       } else if (d.status === "declined") {
-        chUnsub();
+        db.ref("user_challenges/" + toUid + "/" + chId).off("value", chCb);
         showT("Sfida rifiutata.");
       }
-    });
+    };
+    db.ref("user_challenges/" + toUid + "/" + chId).on("value", chCb);
   });
 }
 
 function acceptChallenge() {
   if (!hasFB || !db || !currentUser || !pendingChallengeId) return;
-  var chRef = db.collection("challenges").doc(pendingChallengeId);
-  chRef.get().then(function(snap) {
-    if (!snap.exists) return;
-    var ch = snap.data();
+  var chPath = "user_challenges/" + currentUser.uid + "/" + pendingChallengeId;
+  db.ref(chPath).once("value").then(function(snap) {
+    if (!snap.exists()) return;
+    var ch = snap.val();
     var deck = shuf(mkDeck());
-    var hand1 = [], hand2 = [];
-    var i;
+    var hand1 = [], hand2 = [], i;
     for (i = 0; i < 5; i++) { hand1.push(deck.pop()); hand2.push(deck.pop()); }
     var briCard = deck.shift();
-    var roomData = {
-      code: genRoomCode(),
-      createdBy: ch.fromUid,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    var roomRef = db.ref("rooms").push();
+    var roomId = roomRef.key;
+    roomRef.set({
+      code: genRoomCode(), createdBy: ch.fromUid,
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
       status: "playing",
       player1: { uid: ch.fromUid, email: ch.fromEmail },
       player2: { uid: currentUser.uid, email: currentUser.email, nick: myNickname },
-      deck: JSON.parse(JSON.stringify(deck)),
-      briscola: JSON.parse(JSON.stringify(briCard)),
-      briscolaSuit: briCard.s,
-      hand1: JSON.parse(JSON.stringify(hand1)),
-      hand2: JSON.parse(JSON.stringify(hand2)),
+      deck: deck, briscola: briCard, briscolaSuit: briCard.s,
+      hand1: hand1, hand2: hand2,
       trick: [], currentTurn: 1, phase: "play",
       prese1: [], prese2: [], points1: 0, points2: 0,
       mariotto1: 0, mariotto2: 0, declaredMariotto: {},
-      winner: null, finalScore: null
-    };
-    return db.collection("rooms").add(roomData).then(function(roomRef) {
-      return chRef.update({ status: "accepted", roomId: roomRef.id }).then(function() {
-        leaveLobby();
-        startMultiplayerGame(roomRef.id, 2);
-      });
+      winner: false, finalScore: false
+    }).then(function() {
+      db.ref(chPath).update({ status: "accepted", roomId: roomId });
+      leaveLobby();
+      startMultiplayerGame(roomId, 2);
     });
   });
 }
 
 function declineChallenge() {
   if (!hasFB || !db || !pendingChallengeId) return;
-  db.collection("challenges").doc(pendingChallengeId).update({ status: "declined" });
+  db.ref("user_challenges/" + currentUser.uid + "/" + pendingChallengeId).update({ status: "declined" });
   pendingChallengeId = null;
   showScreen("lobby");
 }
@@ -2393,36 +2226,37 @@ var incomingChallenge = null;
 
 function setPresence(online, inGame) {
   if (!hasFB || !db || !currentUser) return;
-  var ref = db.collection("presence").doc(currentUser.uid);
-  ref.set({
-    uid: currentUser.uid,
-    email: currentUser.email,
-    online: online,
-    inGame: inGame || false,
-    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-  }, {merge: true}).catch(function(){});
+  var presRef = db.ref("presence/" + currentUser.uid);
+  presRef.set({
+    uid: currentUser.uid, email: currentUser.email, nick: myNickname,
+    online: online, inGame: inGame || false,
+    lastSeen: firebase.database.ServerValue.TIMESTAMP
+  }).catch(function(){});
+  if (online) {
+    presRef.onDisconnect().remove();
+  }
 }
 
 function removePresence() {
   if (!hasFB || !db || !currentUser) return;
-  db.collection("presence").doc(currentUser.uid).delete().catch(function(){});
+  db.ref("presence/" + currentUser.uid).remove().catch(function(){});
 }
 
 function listenForChallenges() {
   if (!hasFB || !db || !currentUser) return;
   if (challengeUnsub) challengeUnsub();
-  challengeUnsub = db.collection("challenges")
-    .where("toUid", "==", currentUser.uid)
-    .where("status", "==", "pending")
-    .onSnapshot(function(snap) {
-      snap.docChanges().forEach(function(change) {
-        if (change.type === "added") {
-          var data = change.doc.data();
-          incomingChallenge = {id: change.doc.id, data: data};
-          showChallengePopup(data.fromEmail);
-        }
-      });
+  var chPath = "user_challenges/" + currentUser.uid;
+  var chCb = function(snap) {
+    snap.forEach(function(child) {
+      var data = child.val();
+      if (data && data.status === "pending") {
+        incomingChallenge = {id: child.key, data: data};
+        showChallengePopup(data.fromEmail);
+      }
     });
+  };
+  challengeUnsub = function() { db.ref(chPath).off("value", chCb); };
+  db.ref(chPath).orderByChild("status").equalTo("pending").on("value", chCb);
 }
 
 function showChallengePopup(fromEmail) {
@@ -2452,52 +2286,36 @@ function acceptFriendChallenge() {
   var chId = incomingChallenge.id;
   var chData = incomingChallenge.data;
   hideChallengePopup();
-
   var code = genRoomCode();
   var deck = shuf(mkDeck());
-  var hand1 = [], hand2 = [];
-  var i;
+  var hand1 = [], hand2 = [], i;
   for (i = 0; i < 5; i++) { hand1.push(deck.pop()); hand2.push(deck.pop()); }
   var briCard = deck.shift();
-
-  var roomData = {
-    code: code,
-    createdBy: chData.fromUid,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  var roomRef = db.ref("rooms").push();
+  var roomId = roomRef.key;
+  roomRef.set({
+    code: code, createdBy: chData.fromUid,
+    createdAt: firebase.database.ServerValue.TIMESTAMP,
     status: "playing",
     player1: { uid: chData.fromUid, email: chData.fromEmail },
     player2: { uid: currentUser.uid, email: currentUser.email, nick: myNickname },
-    deck: JSON.parse(JSON.stringify(deck)),
-    briscola: JSON.parse(JSON.stringify(briCard)),
-    briscolaSuit: briCard.s,
-    hand1: JSON.parse(JSON.stringify(hand1)),
-    hand2: JSON.parse(JSON.stringify(hand2)),
-    trick: [],
-    currentTurn: 1,
-    phase: "play",
-    prese1: [], prese2: [],
-    points1: 0, points2: 0,
-    mariotto1: 0, mariotto2: 0,
-    declaredMariotto: {},
-    winner: null, finalScore: null
-  };
-
-  db.collection("rooms").add(roomData).then(function(docRef) {
-    db.collection("challenges").doc(chId).update({
-      status: "accepted",
-      roomId: docRef.id
-    });
+    deck: deck, briscola: briCard, briscolaSuit: briCard.s,
+    hand1: hand1, hand2: hand2,
+    trick: [], currentTurn: 1, phase: "play",
+    prese1: [], prese2: [], points1: 0, points2: 0,
+    mariotto1: 0, mariotto2: 0, declaredMariotto: {},
+    winner: false, finalScore: false
+  }).then(function() {
+    db.ref("user_challenges/" + currentUser.uid + "/" + chId).update({ status: "accepted", roomId: roomId });
     setPresence(true, true);
-    startMultiplayerGame(docRef.id, 2);
-  }).catch(function(e) {
-    showT("Errore: " + e.message);
-  });
+    startMultiplayerGame(roomId, 2);
+  }).catch(function(e) { showT("Errore: " + e.message); });
   incomingChallenge = null;
 }
 
 function declineFriendChallenge() {
   if (!incomingChallenge || !hasFB || !db) return;
-  db.collection("challenges").doc(incomingChallenge.id).update({status: "declined"}).catch(function(){});
+  db.ref("user_challenges/" + currentUser.uid + "/" + incomingChallenge.id).update({status: "declined"}).catch(function(){});
   hideChallengePopup();
   incomingChallenge = null;
 }
@@ -2511,98 +2329,79 @@ function addFriend() {
   errEl.innerHTML = "";
   if (!email || email.indexOf("@") < 0) { errEl.innerHTML = "Inserisci un email valida."; return; }
   if (email === currentUser.email.toLowerCase()) { errEl.innerHTML = "Non puoi aggiungere te stesso!"; return; }
-
   var myEmail = currentUser.email.toLowerCase();
-  db.collection("friends")
-    .where("user1", "==", myEmail < email ? myEmail : email)
-    .where("user2", "==", myEmail < email ? email : myEmail)
-    .get()
-    .then(function(snap) {
-      if (!snap.empty) {
-        errEl.innerHTML = "Amicizia gia esistente o richiesta in corso.";
-        return;
-      }
-      db.collection("friends").add({
-        user1: myEmail < email ? myEmail : email,
-        user2: myEmail < email ? email : myEmail,
-        user1uid: myEmail < email ? currentUser.uid : "",
-        user2uid: myEmail < email ? "" : currentUser.uid,
-        status: "pending",
-        requestedBy: myEmail,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      }).then(function() {
-        inp.value = "";
-        showT("Richiesta inviata a " + getNick(email) + "!");
-      }).catch(function(e) {
-        errEl.innerHTML = "Errore: " + e.message;
-      });
-    }).catch(function(e) {
-      errEl.innerHTML = "Errore: " + e.message;
-    });
+  var friendKey = myEmail < email ? myEmail.replace(/[^a-z0-9]/g, "_") + "__" + email.replace(/[^a-z0-9]/g, "_") : email.replace(/[^a-z0-9]/g, "_") + "__" + myEmail.replace(/[^a-z0-9]/g, "_");
+  db.ref("friends/" + friendKey).once("value").then(function(snap) {
+    if (snap.exists()) {
+      errEl.innerHTML = "Amicizia gia esistente o richiesta in corso.";
+      return;
+    }
+    db.ref("friends/" + friendKey).set({
+      user1: myEmail < email ? myEmail : email,
+      user2: myEmail < email ? email : myEmail,
+      user1uid: myEmail < email ? currentUser.uid : "",
+      user2uid: myEmail < email ? "" : currentUser.uid,
+      status: "pending",
+      requestedBy: myEmail,
+      createdAt: firebase.database.ServerValue.TIMESTAMP
+    }).then(function() {
+      inp.value = "";
+      showT("Richiesta inviata a " + getNick(email) + "!");
+    }).catch(function(e) { errEl.innerHTML = "Errore: " + e.message; });
+  }).catch(function(e) { errEl.innerHTML = "Errore: " + e.message; });
 }
 
 function acceptFriendRequest(docId) {
   if (!hasFB || !db || !currentUser) return;
-  db.collection("friends").doc(docId).update({
-    status: "accepted",
-    user1uid: currentUser.uid,
-    user2uid: currentUser.uid
-  }).then(function() {
-    return db.collection("friends").doc(docId).get();
-  }).then(function(snap) {
-    if (snap.exists) {
-      var d = snap.data();
-      var update = {};
-      var myEmail = currentUser.email.toLowerCase();
-      if (d.user1 === myEmail) { update.user1uid = currentUser.uid; }
-      else { update.user2uid = currentUser.uid; }
-      update.status = "accepted";
-      db.collection("friends").doc(docId).update(update);
-    }
+  db.ref("friends/" + docId).once("value").then(function(snap) {
+    if (!snap.exists()) return;
+    var d = snap.val();
+    var myEmail = currentUser.email.toLowerCase();
+    var update = { status: "accepted" };
+    if (d.user1 === myEmail) update.user1uid = currentUser.uid;
+    else update.user2uid = currentUser.uid;
+    db.ref("friends/" + docId).update(update);
   }).catch(function(){});
 }
 
 function declineFriendRequest(docId) {
   if (!hasFB || !db) return;
-  db.collection("friends").doc(docId).delete().catch(function(){});
+  db.ref("friends/" + docId).remove().catch(function(){});
 }
 
 function sendFriendChallenge(friendEmail, friendUid) {
   if (!hasFB || !db || !currentUser) return;
-  db.collection("challenges").add({
-    fromUid: currentUser.uid,
-    fromEmail: currentUser.email,
-    toUid: friendUid,
-    toEmail: friendEmail,
-    status: "pending",
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(function(docRef) {
+  var chRef = db.ref("user_challenges/" + friendUid).push();
+  var chId = chRef.key;
+  chRef.set({
+    fromUid: currentUser.uid, fromEmail: currentUser.email,
+    toUid: friendUid, toEmail: friendEmail,
+    status: "pending", createdAt: firebase.database.ServerValue.TIMESTAMP
+  }).then(function() {
     showT("Sfida inviata a " + getNick(friendEmail) + "!");
-    var chRef = db.collection("challenges").doc(docRef.id);
-    var chUnsub = chRef.onSnapshot(function(snap) {
-      if (!snap.exists) return;
-      var d = snap.data();
+    var chCb = function(snap) {
+      if (!snap.exists()) return;
+      var d = snap.val();
       if (d.status === "accepted" && d.roomId) {
-        chUnsub();
+        db.ref("user_challenges/" + friendUid + "/" + chId).off("value", chCb);
         setPresence(true, true);
         startMultiplayerGame(d.roomId, 1);
       } else if (d.status === "declined") {
-        chUnsub();
+        db.ref("user_challenges/" + friendUid + "/" + chId).off("value", chCb);
         showT("Sfida rifiutata.");
       }
-    });
+    };
+    db.ref("user_challenges/" + friendUid + "/" + chId).on("value", chCb);
     setTimeout(function() {
-      chRef.get().then(function(snap) {
-        if (snap.exists && snap.data().status === "pending") {
-          chRef.update({status: "expired"}).catch(function(){});
-          chUnsub();
+      db.ref("user_challenges/" + friendUid + "/" + chId).once("value").then(function(snap) {
+        if (snap.exists() && snap.val().status === "pending") {
+          db.ref("user_challenges/" + friendUid + "/" + chId).update({status: "expired"}).catch(function(){});
+          db.ref("user_challenges/" + friendUid + "/" + chId).off("value", chCb);
           showT("Sfida scaduta.");
         }
       }).catch(function(){});
     }, 30000);
-  }).catch(function(e) {
-    showT("Errore: " + e.message);
-  });
+  }).catch(function(e) { showT("Errore: " + e.message); });
 }
 
 function enterFriendsScreen() {
@@ -2613,58 +2412,40 @@ function enterFriendsScreen() {
 
 function loadFriends() {
   if (!hasFB || !db || !currentUser) return;
-  var myEmail = currentUser.email.toLowerCase();
-
   if (friendsUnsub) friendsUnsub();
-  friendsUnsub = db.collection("friends")
-    .where("user1", "==", myEmail)
-    .onSnapshot(function(snap1) {
-      db.collection("friends")
-        .where("user2", "==", myEmail)
-        .get()
-        .then(function(snap2) {
-          friendsList = [];
-          pendingRequests = [];
-          snap1.forEach(function(doc) {
-            var d = doc.data(); d._id = doc.id;
-            if (d.status === "pending" && d.requestedBy !== myEmail) { pendingRequests.push(d); }
-            else if (d.status === "accepted") { friendsList.push(d); }
-            else if (d.status === "pending" && d.requestedBy === myEmail) { friendsList.push(d); }
-          });
-          snap2.forEach(function(doc) {
-            var d = doc.data(); d._id = doc.id;
-            if (d.status === "pending" && d.requestedBy !== myEmail) { pendingRequests.push(d); }
-            else if (d.status === "accepted") { friendsList.push(d); }
-            else if (d.status === "pending" && d.requestedBy === myEmail) { friendsList.push(d); }
-          });
-          loadPresenceForFriends();
-        }).catch(function(){});
+  var friendsCb = function(snap) {
+    friendsList = [];
+    pendingRequests = [];
+    var myEmail = currentUser.email.toLowerCase();
+    snap.forEach(function(child) {
+      var d = child.val();
+      if (!d) return;
+      if (d.user1 !== myEmail && d.user2 !== myEmail) return;
+      d._id = child.key;
+      if (d.status === "pending" && d.requestedBy !== myEmail) pendingRequests.push(d);
+      else if (d.status === "accepted") friendsList.push(d);
+      else if (d.status === "pending" && d.requestedBy === myEmail) friendsList.push(d);
     });
+    loadPresenceForFriends();
+  };
+  friendsUnsub = function() { db.ref("friends").off("value", friendsCb); };
+  db.ref("friends").on("value", friendsCb);
 }
 
 function loadPresenceForFriends() {
   if (presenceUnsub) presenceUnsub();
-  var friendEmails = [];
-  var i, f, fEmail;
-  var myEmail = currentUser.email.toLowerCase();
-  for (i = 0; i < friendsList.length; i++) {
-    f = friendsList[i];
-    fEmail = f.user1 === myEmail ? f.user2 : f.user1;
-    friendEmails.push(fEmail);
-  }
-  if (friendEmails.length === 0) { renderFriendsScreen(); return; }
-
+  if (friendsList.length === 0 && pendingRequests.length === 0) { renderFriendsScreen(); return; }
   presenceMap = {};
-  presenceUnsub = db.collection("presence")
-    .where("online", "==", true)
-    .onSnapshot(function(snap) {
-      presenceMap = {};
-      snap.forEach(function(doc) {
-        var d = doc.data();
-        if (d.email) presenceMap[d.email.toLowerCase()] = d;
-      });
-      renderFriendsScreen();
+  var presCb = function(snap) {
+    presenceMap = {};
+    snap.forEach(function(child) {
+      var d = child.val();
+      if (d && d.email) presenceMap[d.email.toLowerCase()] = d;
     });
+    renderFriendsScreen();
+  };
+  presenceUnsub = function() { db.ref("presence").off("value", presCb); };
+  db.ref("presence").on("value", presCb);
 }
 
 function renderFriendsScreen() {
