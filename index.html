@@ -1222,8 +1222,18 @@ function startMultiplayerGame(roomId, playerNum) {
       if (!oldDM[newKeys[nk]]) {
         if (newData.currentTurn !== mpPlayer) {
           var oppNm = getPlayerNick(mpPlayer === 1 ? newData.player2 : newData.player1);
-          var bn = newKeys[nk] === newData.briscolaSuit ? "+40" : "+20";
-          showT(oppNm + " dichiara MARIOTTO! (" + SN[newKeys[nk]] + " " + bn + " punti)");
+          var declSuit = newKeys[nk];
+          var bn = declSuit === newData.briscolaSuit ? "+40" : "+20";
+          var reCard = {s: declSuit, v: "re"};
+          var cavCard = {s: declSuit, v: "cavallo"};
+          showO('<h2 style="color:#FFD700">&#9812; MARIOTTO!</h2>'
+            + '<p style="text-align:center">' + oppNm + ' dichiara Mariotto di ' + SN[declSuit] + '!</p>'
+            + '<div style="display:flex;justify-content:center;gap:8px;margin:10px 0">'
+            + '<img src="' + cImg(reCard) + '" style="width:60px;height:97px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.5)">'
+            + '<img src="' + cImg(cavCard) + '" style="width:60px;height:97px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.5)">'
+            + '</div>'
+            + '<p style="text-align:center;color:#FFD700;font-size:16px;font-weight:bold">' + bn + ' punti!</p>'
+            + '<button class="cb" data-action="co">OK</button>');
         }
       }
     }
@@ -1751,7 +1761,20 @@ function mpDeclareM() {
   if (mpPlayer === 1) update.mariotto1 = (mpData.mariotto1 || 0) + bonus;
   else update.mariotto2 = (mpData.mariotto2 || 0) + bonus;
   db.ref("rooms/" + currentRoomId).update(update);
-  showT("MARIOTTO dichiarato! +" + bonus);
+  var declH = '<h2 style="color:#FFD700">&#9812; MARIOTTO!</h2>';
+  declH += '<p style="text-align:center">Hai dichiarato Mariotto!</p>';
+  declH += '<div style="display:flex;justify-content:center;gap:8px;margin:10px 0">';
+  var mi3;
+  for (mi3 = 0; mi3 < ms.length; mi3++) {
+    var reC = {s: ms[mi3], v: "re"};
+    var cavC = {s: ms[mi3], v: "cavallo"};
+    declH += '<img src="' + cImg(reC) + '" style="width:60px;height:97px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.5)">';
+    declH += '<img src="' + cImg(cavC) + '" style="width:60px;height:97px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.5)">';
+  }
+  declH += '</div>';
+  declH += '<p style="text-align:center;color:#FFD700;font-size:16px;font-weight:bold">+' + bonus + ' punti!</p>';
+  declH += '<button class="cb" data-action="co">OK</button>';
+  showO(declH);
 }
 
 function mpSwap7() {
