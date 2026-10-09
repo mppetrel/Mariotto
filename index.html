@@ -1230,13 +1230,14 @@ function startMultiplayerGame(roomId, playerNum) {
           } else {
             declNm = "Tu";
           }
-          showO('<h2 style="color:#FFD700">&#9812; MARIOTTO!</h2>'
-            + '<p style="text-align:center">' + declNm + (declNm === "Tu" ? " dichiari" : " dichiara") + ' Mariotto di ' + SN[declSuit2] + '!</p>'
-            + '<div style="display:flex;justify-content:center;gap:8px;margin:10px 0">'
-            + '<img src="' + cImg(reCard2) + '" style="width:60px;height:97px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.5)">'
-            + '<img src="' + cImg(cavCard2) + '" style="width:60px;height:97px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.5)">'
+          showO('<h2 style="color:#FFD700;font-size:22px">&#9812; MARIOTTO!</h2>'
+            + '<p style="text-align:center;font-size:18px;margin:8px 0"><strong style="color:#fff;font-size:22px">' + declNm + '</strong></p>'
+            + '<p style="text-align:center;font-size:14px;color:#ccc">' + (declNm === "Tu" ? "dichiari" : "dichiara") + ' Mariotto di <strong style="color:#FFD700">' + SN[declSuit2] + '</strong></p>'
+            + '<div style="display:flex;justify-content:center;gap:10px;margin:12px 0">'
+            + '<img src="' + cImg(reCard2) + '" style="width:65px;height:105px;border-radius:5px;box-shadow:0 3px 12px rgba(0,0,0,0.6);border:2px solid #DAA520">'
+            + '<img src="' + cImg(cavCard2) + '" style="width:65px;height:105px;border-radius:5px;box-shadow:0 3px 12px rgba(0,0,0,0.6);border:2px solid #DAA520">'
             + '</div>'
-            + '<p style="text-align:center;color:#FFD700;font-size:16px;font-weight:bold">' + bn2 + ' punti!</p>');
+            + '<p style="text-align:center;color:#FFD700;font-size:20px;font-weight:bold">' + bn2 + ' punti!</p>');
           setTimeout(function() { hideO(); }, 5000);
       }
     }
